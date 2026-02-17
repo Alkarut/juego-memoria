@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CLEANMANT ULTIMATE - REPLICA</title>
+    <title>CLEANMANT ULTIMATE - PHOTO REALISTIC</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body { 
@@ -17,18 +17,20 @@
             max-width: 95vw; max-height: 85vh;
             border: 4px solid #00ffff;
             box-shadow: 0 0 25px #00ffff;
-            background: #050a10;
+            /* FONDO DE CIRCUITOS REALISTA */
+            background-image: url('https://img.freepik.com/vector-premium/fondo-placa-circuito-estilo-futurista_23-2148403402.jpg');
+            background-size: cover;
         }
         .ui-panel {
             position: absolute; top: 0; width: 100%;
             display: flex; justify-content: space-around;
-            padding: 15px 0; background: rgba(0,0,0,0.7);
+            padding: 15px 0; background: rgba(0,0,0,0.8);
             font-size: 10px; color: #00ffff; z-index: 10;
             border-bottom: 2px solid #00ffff;
         }
         .progress-bar { width: 120px; height: 12px; border: 1px solid #00ffff; background: #000; margin-top: 5px; }
-        #fill { background: #39ff14; height: 100%; width: 0%; box-shadow: 0 0 10px #39ff14; }
-        canvas { width: 100%; height: 100%; }
+        #fill { background: #39ff14; height: 100%; width: 0%; box-shadow: 0 0 10px #39ff14; transition: width 0.3s; }
+        canvas { width: 100%; height: 100%; position: absolute; left: 0; top: 0; }
     </style>
 </head>
 <body>
@@ -49,144 +51,124 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
+// --- CARGA DE ASSETS REALISTAS ---
+const imgFan = new Image();
+imgFan.src = 'https://i.imgur.com/8y97U0X.png'; // Aspas de ventilador transparentes
+const imgFanCase = new Image();
+imgFanCase.src = 'https://i.imgur.com/mO3I7Vz.png'; // Marco del ventilador
+const imgVirus = new Image();
+imgVirus.src = 'https://i.imgur.com/6S3vE7X.png'; // Virus pixel-art rojo
+const imgSponge = new Image();
+imgSponge.src = 'https://i.imgur.com/yvD7R4E.png'; // Esponja limpia
+
 let level = 1, lives = 3, frame = 0, gameRunning = true;
-let sponge = { x: 175, y: 500, w: 50, h: 35 };
+let sponge = { x: 175, y: 500, w: 50, h: 50 };
 let dust = [], viruses = [], fanAngle = 0;
 
-// Configuración inicial del nivel
 function initLevel() {
-    dust = [];
-    viruses = [];
-    let amount = 20 + (level * 5);
+    dust = []; viruses = [];
+    let amount = 15 + (level * 5);
     for(let i=0; i<amount; i++) {
-        dust.push({ x: Math.random()*340+30, y: Math.random()*350+120, r: 4, active: true });
+        dust.push({ x: Math.random()*340+30, y: Math.random()*350+120, r: 5, active: true });
     }
     if(level >= 2) {
         for(let i=0; i<level; i++) {
-            viruses.push({ x: Math.random()*350, y: 100, vx: 3, vy: 2, r: 18 });
+            viruses.push({ x: Math.random()*350, y: 100, vx: 2, vy: 1.5, r: 20 });
         }
     }
 }
 
-// Dibujar el fondo de circuitos (Líneas tecnológicas)
-function drawCircuitry() {
-    ctx.strokeStyle = "rgba(0, 255, 255, 0.05)";
-    ctx.lineWidth = 2;
-    for(let i=0; i<canvas.width; i+=40) {
-        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 600); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(400, i); ctx.stroke();
-    }
-}
-
-// Dibujar Virus (Como en la foto: cuerpo rojo con pinchos y ojos)
-function drawVirus(v) {
-    ctx.save();
-    ctx.translate(v.x, v.y);
-    ctx.fillStyle = "#ff0000";
-    // Pinchos
-    for(let i=0; i<8; i++) {
-        ctx.rotate(Math.PI/4);
-        ctx.fillRect(v.r - 5, -2, 10, 4);
-    }
-    // Cuerpo
-    ctx.beginPath(); ctx.arc(0, 0, v.r, 0, Math.PI*2); ctx.fill();
-    // Ojos
-    ctx.fillStyle = "white";
-    ctx.fillRect(-8, -6, 5, 5); ctx.fillRect(3, -6, 5, 5);
-    ctx.restore();
-}
-
-// Dibujar Ventilador (Efecto metálico de la torre)
 function drawFan() {
+    // Dibujar el marco (estático)
+    ctx.drawImage(imgFanCase, 100, 200, 200, 200);
+    
+    // Dibujar las aspas (girando)
     ctx.save();
     ctx.translate(200, 300);
-    fanAngle += 0.1;
+    fanAngle += 0.15; // Velocidad de giro
     ctx.rotate(fanAngle);
-    ctx.fillStyle = "#222";
-    ctx.beginPath(); ctx.arc(0, 0, 90, 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle = "#444"; ctx.lineWidth = 5; ctx.stroke();
-    
-    ctx.fillStyle = "#333";
-    for(let i=0; i<7; i++) {
-        ctx.rotate((Math.PI*2)/7);
-        ctx.beginPath();
-        ctx.ellipse(40, 0, 45, 15, 0, 0, Math.PI*2);
-        ctx.fill();
-    }
+    ctx.drawImage(imgFan, -90, -90, 180, 180);
     ctx.restore();
 }
 
-// Controles
 canvas.addEventListener("touchmove", (e) => {
     e.preventDefault();
     let rect = canvas.getBoundingClientRect();
     let t = e.touches[0];
     sponge.x = (t.clientX - rect.left) * (400/rect.width) - 25;
-    sponge.y = (t.clientY - rect.top) * (600/rect.height) - 20;
+    sponge.y = (t.clientY - rect.top) * (600/rect.height) - 25;
 });
 
 function loop() {
     if(!gameRunning) return;
     ctx.clearRect(0, 0, 400, 600);
-    drawCircuitry();
 
-    if(level === 1 || level === 5) drawFan();
+    // Fondo oscuro semi-transparente para resaltar circuitos
+    ctx.fillStyle = "rgba(0,0,0,0.4)";
+    ctx.fillRect(0,0,400,600);
 
-    // Láser Neón
-    ctx.shadowBlur = 15; ctx.shadowColor = "#00ffff";
-    ctx.strokeStyle = "white"; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.moveTo(sponge.x+25, sponge.y); ctx.lineTo(sponge.x+25, 0); ctx.stroke();
+    if(level === 1 || level >= 4) drawFan();
+
+    // Láser Neón con resplandor
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = "#00ffff";
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(sponge.x + 25, sponge.y);
+    ctx.lineTo(sponge.x + 25, 0);
+    ctx.stroke();
     ctx.shadowBlur = 0;
 
-    // Polvo
-    ctx.fillStyle = "#8b4513";
+    // Polvo (Mugre)
+    ctx.fillStyle = "#553311";
     let activeDust = 0;
     dust.forEach(d => {
         if(d.active) {
             ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI*2); ctx.fill();
-            if(Math.hypot(sponge.x+25-d.x, sponge.y+17-d.y) < 30) d.active = false;
-            if(Math.abs(d.x - (sponge.x+25)) < 15 && d.y < sponge.y) d.active = false;
+            // Limpieza por contacto o láser
+            if(Math.hypot(sponge.x+25-d.x, sponge.y+25-d.y) < 35 || 
+               (Math.abs(d.x - (sponge.x+25)) < 15 && d.y < sponge.y)) {
+                d.active = false;
+            }
             activeDust++;
         }
     });
 
-    // Progreso
-    let total = 20 + (level * 5);
-    document.getElementById("fill").style.width = ((total - activeDust) / total * 100) + "%";
+    document.getElementById("fill").style.width = ((dust.length - activeDust) / dust.length * 100) + "%";
 
     // Virus
     viruses.forEach(v => {
         v.x += v.vx; v.y += v.vy;
-        if(v.x < 20 || v.x > 380) v.vx *= -1;
-        if(v.y < 20 || v.y > 400) v.vy *= -1;
-        drawVirus(v);
-        if(Math.hypot(sponge.x+25-v.x, sponge.y+17-v.y) < 35) { lives--; checkLives(); }
+        if(v.x < 0 || v.x > 360) v.vx *= -1;
+        if(v.y < 50 || v.y > 400) v.vy *= -1;
+        ctx.drawImage(imgVirus, v.x, v.y, 40, 40);
+        if(Math.hypot(sponge.x+25-(v.x+20), sponge.y+25-(v.y+20)) < 40) {
+            lives--;
+            checkLives();
+        }
     });
 
-    // Cleanmant (Esponja Amarilla)
-    ctx.fillStyle = "#ffdd00";
-    ctx.shadowBlur = 10; ctx.shadowColor = "#ffdd00";
-    ctx.beginPath(); ctx.roundRect(sponge.x, sponge.y, 50, 35, 5); ctx.fill();
-    ctx.shadowBlur = 0;
+    // Personaje Esponja
+    ctx.drawImage(imgSponge, sponge.x, sponge.y, sponge.w, sponge.h);
 
-    if(activeDust === 0) { 
-        level++; 
-        if(level > 5) { alert("¡HAS LIMPIADO CON ÉXITO LA PC!"); location.reload(); }
+    if(activeDust === 0) {
+        level++;
+        if(level > 5) { alert("¡PC LIMPIA! ERES UN EXPERTO."); location.reload(); }
         else { document.getElementById("lvl").innerText = level; initLevel(); }
     }
 
-    frame++;
     requestAnimationFrame(loop);
 }
 
 function checkLives() {
     document.getElementById("vds").innerText = "❤️".repeat(lives);
-    if(lives <= 0) { alert("SISTEMA INFECTADO - FIN DEL JUEGO"); location.reload(); }
-    sponge.x = 175; sponge.y = 500; // Reset posición
+    if(lives <= 0) { alert("SISTEMA COLAPSADO"); location.reload(); }
+    sponge.x = 175; sponge.y = 500;
 }
 
-initLevel();
-loop();
+// Iniciar juego cuando carguen las imágenes
+imgFan.onload = () => { initLevel(); loop(); };
 </script>
 </body>
 </html>
