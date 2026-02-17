@@ -12,19 +12,12 @@ body{
     background:linear-gradient(to bottom,#cce6ff,#3399ff);
     font-family:Arial, sans-serif;
 }
-
-h1{
-    color:#003366;
-}
-
 canvas{
     background:#f2f2f2;
     border:5px solid #003366;
     border-radius:15px;
     display:none;
-    touch-action:none;
 }
-
 button{
     padding:12px 25px;
     font-size:18px;
@@ -32,9 +25,7 @@ button{
     color:white;
     border:none;
     border-radius:10px;
-    margin-top:10px;
 }
-
 #menu{
     margin-top:100px;
 }
@@ -49,195 +40,67 @@ button{
 </div>
 
 <canvas id="game" width="350" height="500"></canvas>
-<br>
-<button id="restartBtn" onclick="restartGame()" style="display:none;">🔄 Reiniciar</button>
 
 <script>
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
 const menu=document.getElementById("menu");
-const restartBtn=document.getElementById("restartBtn");
 
-let sponge,dirt,wires,lives,score,level;
-let gameOver=false,win=false;
-let startTime,shockEffect=0,confetti=0;
+let sponge={x:150,y:420,size:40};
+let dirt=[];
+let wires=[
+    {x:40,y:200,width:270,height:15}
+];
+let lives=3;
+let gameOver=false;
 
-const music=new Audio("https://actions.google.com/sounds/v1/ambiences/buzzing_bee.ogg");
-music.loop=true;
-
-function initGame(){
-    sponge={x:150,y:420,size:40};
-    dirt=[];
-    wires=[
-        {x:40,y:180,width:270,height:15},
-        {x:80,y:300,width:200,height:15}
-    ];
-    lives=3;
-    score=0;
-    level=1;
-    gameOver=false;
-    win=false;
-    shockEffect=0;
-    confetti=0;
-    startTime=Math.floor(Date.now()/1000);
-
-    for(let i=0;i<20;i++){
-        dirt.push({
-            x:Math.random()*260+50,
-            y:Math.random()*240+80,
-            size:15
-        });
-    }
+for(let i=0;i<15;i++){
+    dirt.push({
+        x:Math.random()*260+50,
+        y:Math.random()*240+80,
+        size:15
+    });
 }
 
 function startGame(){
     menu.style.display="none";
     canvas.style.display="block";
-    restartBtn.style.display="inline-block";
-    initGame();
-    music.play();
 }
 
-function restartGame(){
-    initGame();
-}
+function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
 
-function drawComputer(){
     ctx.fillStyle="#666";
     ctx.fillRect(40,50,270,380);
-    ctx.fillStyle="#222";
-    ctx.fillRect(100,70,150,30);
-}
 
-function drawDirt(){
-    ctx.fillStyle="#5a2d0c";
+    ctx.fillStyle="brown";
     dirt.forEach(d=>{
         ctx.beginPath();
         ctx.arc(d.x,d.y,d.size,0,Math.PI*2);
         ctx.fill();
     });
-}
 
-function drawWires(){
     ctx.fillStyle="red";
     wires.forEach(w=>{
         ctx.fillRect(w.x,w.y,w.width,w.height);
     });
-}
 
-function drawSponge(){
     ctx.fillStyle="yellow";
     ctx.fillRect(sponge.x,sponge.y,sponge.size,sponge.size);
-    ctx.fillStyle="orange";
-    ctx.fillRect(sponge.x,sponge.y+25,sponge.size,10);
-}
 
-function drawHUD(){
-    ctx.fillStyle="black";
-    ctx.font="16px Arial";
-    let currentTime=Math.floor(Date.now()/1000)-startTime;
-    ctx.fillText("❤️ "+lives,10,20);
-    ctx.fillText("⭐ "+score,90,20);
-    ctx.fillText("Nivel "+level,160,20);
-    ctx.fillText("⏱️ "+currentTime+"s",250,20);
-}
-
-function checkCleaning(){
-    dirt=dirt.filter(d=>{
-        let dx=sponge.x+20-d.x;
-        let dy=sponge.y+20-d.y;
-        if(Math.sqrt(dx*dx+dy*dy)<25){
-            score+=10;
-            return false;
-        }
-        return true;
-    });
-
-    if(dirt.length===0){
-        win=true;
-        confetti=60;
-    }
-}
-
-function checkShock(){
-    wires.forEach(w=>{
-        if(
-            sponge.x<w.x+w.width &&
-            sponge.x+sponge.size>w.x &&
-            sponge.y<w.y+w.height &&
-            sponge.y+sponge.size>w.y
-        ){
-            lives--;
-            shockEffect=15;
-            sponge.x=150;
-            sponge.y=420;
-            if(lives<=0){
-                gameOver=true;
-            }
-        }
-    });
-}
-
-function drawShock(){
-    if(shockEffect>0){
-        ctx.fillStyle="rgba(255,255,0,0.5)";
-        ctx.fillRect(0,0,canvas.width,canvas.height);
-        shockEffect--;
-    }
-}
-
-function drawConfetti(){
-    if(confetti>0){
-        for(let i=0;i<25;i++){
-            ctx.fillStyle=hsl(${Math.random()*360},100%,50%);
-            ctx.fillRect(Math.random()*350,Math.random()*500,5,5);
-        }
-        confetti--;
-    }
-}
-
-function drawMessages(){
     if(gameOver){
         ctx.fillStyle="red";
         ctx.font="30px Arial";
-        ctx.fillText("⚡ GAME OVER",70,250);
+        ctx.fillText("GAME OVER",80,250);
     }
-    if(win){
-        ctx.fillStyle="green";
-        ctx.font="24px Arial";
-        ctx.fillText("🎉 ¡Nivel Completado!",50,250);
-    }
-}
-
-function update(){
-    if(!gameOver && !win){
-        checkCleaning();
-        checkShock();
-    }
-
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    drawComputer();
-    drawDirt();
-    drawWires();
-    drawSponge();
-    drawHUD();
-    drawShock();
-    drawConfetti();
-    drawMessages();
 }
 
 canvas.addEventListener("mousemove",e=>{
-    sponge.x=e.offsetX-sponge.size/2;
-    sponge.y=e.offsetY-sponge.size/2;
+    sponge.x=e.offsetX-20;
+    sponge.y=e.offsetY-20;
 });
 
-canvas.addEventListener("touchmove",e=>{
-    let rect=canvas.getBoundingClientRect();
-    sponge.x=e.touches[0].clientX-rect.left-sponge.size/2;
-    sponge.y=e.touches[0].clientY-rect.top-sponge.size/2;
-});
-
-setInterval(update,30);
+setInterval(draw,30);
 </script>
 
 </body>
