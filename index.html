@@ -3,67 +3,74 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TECNO BOT - Limpieza Realista</title>
+
+<!-- Fuente estilo videojuego -->
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+<title>TECNO BOT - Limpieza Pro</title>
 
 <style>
 body{
     margin:0;
     text-align:center;
-    background:linear-gradient(#cce6ff,#3399ff);
-    font-family:Arial;
+    background:radial-gradient(circle,#66ccff,#003366);
+    font-family:'Press Start 2P', cursive;
+    color:white;
 }
 canvas{
     display:none;
-    background:#d9d9d9;
-    border:6px solid #003366;
+    background:#1a1a1a;
+    border:8px solid #00ccff;
     border-radius:20px;
     margin-top:20px;
+    box-shadow:0 0 20px #00ccff;
 }
 button{
-    padding:15px 30px;
-    font-size:18px;
-    background:#003366;
-    color:white;
+    padding:20px;
+    font-size:14px;
+    background:#00ccff;
+    color:black;
     border:none;
     border-radius:10px;
+    font-family:'Press Start 2P', cursive;
 }
 #menu{
-    margin-top:100px;
+    margin-top:120px;
 }
 </style>
 </head>
 <body>
 
 <div id="menu">
-    <h1>🖥️ TECNO BOT</h1>
-    <h2>Limpieza Segura de Computadora ⚡</h2>
-    <button onclick="startGame()">🎮 Jugar</button>
+    <h1>TECNO BOT</h1>
+    <h3>Limpieza Extrema ⚡</h3>
+    <button onclick="startGame()">JUGAR</button>
 </div>
 
-<canvas id="game" width="400" height="550"></canvas>
+<canvas id="game" width="420" height="600"></canvas>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const menu = document.getElementById("menu");
 
-let sponge = {x:180,y:470,size:50};
+let sponge = {x:180,y:520,size:55};
 let dirt = [];
 let wires = [
-    {x:60,y:230,width:280,height:12},
-    {x:60,y:340,width:280,height:12}
+    {x:80,y:260,width:260,height:10},
+    {x:80,y:380,width:260,height:10}
 ];
-let sparks = [];
 let lives = 3;
-let gameOver = false;
+let sparks = [];
 let win = false;
+let gameOver = false;
 
-// Crear polvo realista
-for(let i=0;i<15;i++){
+// Polvo realista
+for(let i=0;i<20;i++){
     dirt.push({
-        x:Math.random()*240+80,
-        y:Math.random()*260+120,
-        size:20
+        x:Math.random()*220+100,
+        y:Math.random()*300+150,
+        size:18+Math.random()*10
     });
 }
 
@@ -85,22 +92,35 @@ canvas.addEventListener("touchmove",e=>{
     sponge.y = e.touches[0].clientY - rect.top - 25;
 });
 
-function drawComputer(){
-    // Torre
-    ctx.fillStyle="#555";
-    ctx.fillRect(60,80,280,420);
+// Dibujar torre realista
+function drawTower(){
+    // cuerpo
+    ctx.fillStyle="#2b2b2b";
+    ctx.fillRect(80,120,260,420);
 
-    // Pantalla
-    ctx.fillStyle="#111";
-    ctx.fillRect(100,110,200,120);
+    // borde metálico
+    ctx.strokeStyle="#00ccff";
+    ctx.lineWidth=3;
+    ctx.strokeRect(80,120,260,420);
+
+    // pantalla
+    ctx.fillStyle="#000";
+    ctx.fillRect(130,150,160,100);
 
     ctx.fillStyle="#00ffcc";
-    ctx.font="18px Arial";
-    ctx.fillText("Sistema Activo",120,170);
+    ctx.font="10px 'Press Start 2P'";
+    ctx.fillText("SYSTEM OK",150,205);
+
+    // ventilador
+    ctx.beginPath();
+    ctx.arc(210,480,35,0,Math.PI*2);
+    ctx.strokeStyle="#555";
+    ctx.stroke();
 }
 
+// Polvo
 function drawDirt(){
-    ctx.fillStyle="#777";
+    ctx.fillStyle="#555";
     dirt.forEach((d,i)=>{
         ctx.beginPath();
         ctx.arc(d.x,d.y,d.size,0,Math.PI*2);
@@ -117,9 +137,10 @@ function drawDirt(){
     });
 }
 
+// Cables eléctricos
 function drawWires(){
-    ctx.fillStyle="red";
     wires.forEach(w=>{
+        ctx.fillStyle="red";
         ctx.fillRect(w.x,w.y,w.width,w.height);
 
         if(
@@ -128,21 +149,22 @@ function drawWires(){
             sponge.y < w.y+w.height &&
             sponge.y+sponge.size > w.y
         ){
-            createSparks(sponge.x+20,sponge.y+20);
+            createSpark(sponge.x+20,sponge.y+20);
             lives--;
             sponge.x=180;
-            sponge.y=470;
+            sponge.y=520;
         }
     });
 }
 
-function createSparks(x,y){
-    for(let i=0;i<8;i++){
+// Chispas
+function createSpark(x,y){
+    for(let i=0;i<10;i++){
         sparks.push({
             x:x,
             y:y,
-            dx:(Math.random()-0.5)*6,
-            dy:(Math.random()-0.5)*6,
+            dx:(Math.random()-0.5)*8,
+            dy:(Math.random()-0.5)*8,
             life:20
         });
     }
@@ -152,39 +174,38 @@ function drawSparks(){
     ctx.fillStyle="yellow";
     sparks.forEach((s,i)=>{
         ctx.beginPath();
-        ctx.arc(s.x,s.y,4,0,Math.PI*2);
+        ctx.arc(s.x,s.y,3,0,Math.PI*2);
         ctx.fill();
         s.x+=s.dx;
         s.y+=s.dy;
         s.life--;
-
         if(s.life<=0){
             sparks.splice(i,1);
         }
     });
 }
 
+// Esponja realista
 function drawSponge(){
     ctx.fillStyle="#ffcc00";
     ctx.fillRect(sponge.x,sponge.y,sponge.size,sponge.size);
 
-    // textura
     ctx.fillStyle="#ffaa00";
-    ctx.fillRect(sponge.x+10,sponge.y+10,20,20);
+    ctx.fillRect(sponge.x+10,sponge.y+10,30,30);
 }
 
 function draw(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    drawComputer();
+    drawTower();
     drawDirt();
     drawWires();
     drawSponge();
     drawSparks();
 
-    ctx.fillStyle="black";
-    ctx.font="18px Arial";
-    ctx.fillText("Vidas: "+lives,10,25);
+    ctx.fillStyle="white";
+    ctx.font="12px 'Press Start 2P'";
+    ctx.fillText("VIDAS: "+lives,20,30);
 
     if(lives<=0){
         gameOver=true;
@@ -196,14 +217,14 @@ function draw(){
 
     if(gameOver){
         ctx.fillStyle="red";
-        ctx.font="30px Arial";
-        ctx.fillText("⚡ TE ELECTROCUTASTE",40,300);
+        ctx.font="16px 'Press Start 2P'";
+        ctx.fillText("GAME OVER ⚡",90,320);
     }
 
     if(win){
-        ctx.fillStyle="green";
-        ctx.font="28px Arial";
-        ctx.fillText("🧽 COMPUTADORA LIMPIA",30,300);
+        ctx.fillStyle="#00ff00";
+        ctx.font="14px 'Press Start 2P'";
+        ctx.fillText("COMPUTADORA LIMPIA",40,320);
     }
 }
 
