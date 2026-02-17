@@ -4,31 +4,30 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Fuente estilo videojuego -->
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
-<title>TECNO BOT - Limpieza Pro</title>
+<title>CLEANMANT</title>
 
 <style>
 body{
     margin:0;
     text-align:center;
-    background:radial-gradient(circle,#66ccff,#003366);
+    background:radial-gradient(circle,#0f2027,#203a43,#2c5364);
     font-family:'Press Start 2P', cursive;
     color:white;
 }
 canvas{
     display:none;
-    background:#1a1a1a;
-    border:8px solid #00ccff;
+    background:#111;
+    border:8px solid #00ffff;
     border-radius:20px;
     margin-top:20px;
-    box-shadow:0 0 20px #00ccff;
+    box-shadow:0 0 30px #00ffff;
 }
 button{
     padding:20px;
     font-size:14px;
-    background:#00ccff;
+    background:#00ffff;
     color:black;
     border:none;
     border-radius:10px;
@@ -42,8 +41,8 @@ button{
 <body>
 
 <div id="menu">
-    <h1>TECNO BOT</h1>
-    <h3>Limpieza Extrema ⚡</h3>
+    <h1>CLEANMANT</h1>
+    <h3>LIMPIEZA EXTREMA ⚡</h3>
     <button onclick="startGame()">JUGAR</button>
 </div>
 
@@ -54,23 +53,23 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const menu = document.getElementById("menu");
 
-let sponge = {x:180,y:520,size:55};
+let sponge = {x:180,y:520,size:60};
 let dirt = [];
-let wires = [
-    {x:80,y:260,width:260,height:10},
-    {x:80,y:380,width:260,height:10}
+let lasers = [
+    {x:80,y:280,width:260,height:6},
+    {x:80,y:400,width:260,height:6}
 ];
 let lives = 3;
 let sparks = [];
-let win = false;
-let gameOver = false;
+let win=false;
+let gameOver=false;
 
-// Polvo realista
-for(let i=0;i<20;i++){
+// Crear polvo
+for(let i=0;i<18;i++){
     dirt.push({
         x:Math.random()*220+100,
         y:Math.random()*300+150,
-        size:18+Math.random()*10
+        size:15+Math.random()*12
     });
 }
 
@@ -81,25 +80,27 @@ function startGame(){
 
 // Mouse
 canvas.addEventListener("mousemove",e=>{
-    sponge.x = e.offsetX - 25;
-    sponge.y = e.offsetY - 25;
+    sponge.x = e.offsetX - 30;
+    sponge.y = e.offsetY - 30;
 });
 
 // Touch
 canvas.addEventListener("touchmove",e=>{
     const rect = canvas.getBoundingClientRect();
-    sponge.x = e.touches[0].clientX - rect.left - 25;
-    sponge.y = e.touches[0].clientY - rect.top - 25;
+    sponge.x = e.touches[0].clientX - rect.left - 30;
+    sponge.y = e.touches[0].clientY - rect.top - 30;
 });
 
-// Dibujar torre realista
+// Dibujar computadora detallada
 function drawTower(){
-    // cuerpo
-    ctx.fillStyle="#2b2b2b";
+    // cuerpo metálico
+    let gradient = ctx.createLinearGradient(80,120,340,540);
+    gradient.addColorStop(0,"#444");
+    gradient.addColorStop(1,"#1a1a1a");
+    ctx.fillStyle=gradient;
     ctx.fillRect(80,120,260,420);
 
-    // borde metálico
-    ctx.strokeStyle="#00ccff";
+    ctx.strokeStyle="#00ffff";
     ctx.lineWidth=3;
     ctx.strokeRect(80,120,260,420);
 
@@ -107,20 +108,26 @@ function drawTower(){
     ctx.fillStyle="#000";
     ctx.fillRect(130,150,160,100);
 
+    let glow = ctx.createRadialGradient(210,200,10,210,200,80);
+    glow.addColorStop(0,"#00ffcc");
+    glow.addColorStop(1,"#001a1a");
+    ctx.fillStyle=glow;
+    ctx.fillRect(130,150,160,100);
+
     ctx.fillStyle="#00ffcc";
     ctx.font="10px 'Press Start 2P'";
-    ctx.fillText("SYSTEM OK",150,205);
+    ctx.fillText("SYSTEM READY",135,205);
 
-    // ventilador
-    ctx.beginPath();
-    ctx.arc(210,480,35,0,Math.PI*2);
-    ctx.strokeStyle="#555";
-    ctx.stroke();
+    // ventilación
+    ctx.fillStyle="#333";
+    for(let i=0;i<5;i++){
+        ctx.fillRect(120,300+i*15,180,5);
+    }
 }
 
 // Polvo
 function drawDirt(){
-    ctx.fillStyle="#555";
+    ctx.fillStyle="#666";
     dirt.forEach((d,i)=>{
         ctx.beginPath();
         ctx.arc(d.x,d.y,d.size,0,Math.PI*2);
@@ -137,19 +144,22 @@ function drawDirt(){
     });
 }
 
-// Cables eléctricos
-function drawWires(){
-    wires.forEach(w=>{
+// Láser brillante
+function drawLasers(){
+    lasers.forEach(l=>{
+        ctx.shadowColor="red";
+        ctx.shadowBlur=15;
         ctx.fillStyle="red";
-        ctx.fillRect(w.x,w.y,w.width,w.height);
+        ctx.fillRect(l.x,l.y,l.width,l.height);
+        ctx.shadowBlur=0;
 
         if(
-            sponge.x < w.x+w.width &&
-            sponge.x+sponge.size > w.x &&
-            sponge.y < w.y+w.height &&
-            sponge.y+sponge.size > w.y
+            sponge.x < l.x+l.width &&
+            sponge.x+sponge.size > l.x &&
+            sponge.y < l.y+l.height &&
+            sponge.y+sponge.size > l.y
         ){
-            createSpark(sponge.x+20,sponge.y+20);
+            createSpark(sponge.x+30,sponge.y+30);
             lives--;
             sponge.x=180;
             sponge.y=520;
@@ -159,12 +169,12 @@ function drawWires(){
 
 // Chispas
 function createSpark(x,y){
-    for(let i=0;i<10;i++){
+    for(let i=0;i<12;i++){
         sparks.push({
             x:x,
             y:y,
-            dx:(Math.random()-0.5)*8,
-            dy:(Math.random()-0.5)*8,
+            dx:(Math.random()-0.5)*10,
+            dy:(Math.random()-0.5)*10,
             life:20
         });
     }
@@ -185,21 +195,25 @@ function drawSparks(){
     });
 }
 
-// Esponja realista
+// Esponja detallada
 function drawSponge(){
-    ctx.fillStyle="#ffcc00";
+    let grad = ctx.createLinearGradient(sponge.x,sponge.y,sponge.x,sponge.y+sponge.size);
+    grad.addColorStop(0,"#ffe066");
+    grad.addColorStop(1,"#ffb703");
+    ctx.fillStyle=grad;
     ctx.fillRect(sponge.x,sponge.y,sponge.size,sponge.size);
 
-    ctx.fillStyle="#ffaa00";
-    ctx.fillRect(sponge.x+10,sponge.y+10,30,30);
+    ctx.fillStyle="#e09f3e";
+    ctx.fillRect(sponge.x+15,sponge.y+15,30,30);
 }
 
+// Loop principal
 function draw(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
     drawTower();
     drawDirt();
-    drawWires();
+    drawLasers();
     drawSponge();
     drawSparks();
 
@@ -218,13 +232,13 @@ function draw(){
     if(gameOver){
         ctx.fillStyle="red";
         ctx.font="16px 'Press Start 2P'";
-        ctx.fillText("GAME OVER ⚡",90,320);
+        ctx.fillText("GAME OVER ⚡",90,330);
     }
 
     if(win){
         ctx.fillStyle="#00ff00";
         ctx.font="14px 'Press Start 2P'";
-        ctx.fillText("COMPUTADORA LIMPIA",40,320);
+        ctx.fillText("PC LIMPIA COMPLETA",40,330);
     }
 }
 
