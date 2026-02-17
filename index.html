@@ -39,7 +39,6 @@
             font-size: 10px;
             margin: 10px;
             display: none;
-            display: flex;
             justify-content: space-around;
         }
         .shock { animation: shake 0.1s infinite; }
@@ -75,6 +74,7 @@ let gameRunning = false;
 let isFiring = false;
 let shockTimer = 0;
 let confetti = [];
+let gameFinished = false;
 
 let sponge = { x: 175, y: 500, size: 50 };
 let dust = [];
@@ -84,28 +84,29 @@ let bubbles = [];
 function moveSponge(e) {
     e.preventDefault();
     let clientX, clientY;
-    if (e.touches) {
+    let rect = canvas.getBoundingClientRect();
+    let scaleX = canvas.width / rect.width;
+    let scaleY = canvas.height / rect.height;
+
+    if (e.touches && e.touches.length > 0) {
         clientX = e.touches[0].clientX;
         clientY = e.touches[0].clientY;
     } else {
         clientX = e.clientX;
         clientY = e.clientY;
     }
-    let rect = canvas.getBoundingClientRect();
-    let scaleX = canvas.width / rect.width;
-    let scaleY = canvas.height / rect.height;
+    
     sponge.x = (clientX - rect.left) * scaleX - 25;
     sponge.y = (clientY - rect.top) * scaleY - (e.touches ? 80 : 25);
 }
 
 canvas.addEventListener("mousemove", moveSponge);
-canvas.addEventListener("touchmove", moveSponge);
+canvas.addEventListener("touchmove", moveSponge, {passive: false});
 canvas.addEventListener("mousedown", () => isFiring = true);
 canvas.addEventListener("mouseup", () => isFiring = false);
-canvas.addEventListener("touchstart", (e) => { isFiring = true; moveSponge(e); });
+canvas.addEventListener("touchstart", (e) => { isFiring = true; moveSponge(e); }, {passive: false});
 canvas.addEventListener("touchend", () => isFiring = false);
 
-// Función para crear confeti
 function createConfetti() {
     for(let i=0; i<80; i++) {
         confetti.push({
@@ -163,13 +164,9 @@ function takeDamage() {
     lives--;
     shockTimer = 40;
     canvas.classList.add("shock");
-    document.getElementById("vds").innerText = "❤️".repeat(lives);
+    document.getElementById("vds").innerText = "❤️".repeat(Math.max(0, lives));
     if(lives <= 0) {
         gameRunning = false;
-        ctx.fillStyle = "white";
-        ctx.font = "20px 'Press Start 2P'";
-        ctx.fillText("GAME OVER", 80, 300);
-        setTimeout(() => location.reload(), 2000);
     }
 }
 
@@ -177,28 +174,15 @@ function drawTower() {
     let g = ctx.createLinearGradient(100, 100, 300, 100);
     g.addColorStop(0, "#111"); g.addColorStop(0.5, "#333"); g.addColorStop(1, "#111");
     ctx.fillStyle = g; ctx.fillRect(100, 100, 200, 350);
-    for(let i=0; i<3; i++) {
-        let y = 160 + (i * 90);
-        let rad = ctx.createRadialGradient(200, y, 2, 200, y, 30);
-        rad.addColorStop(0, "cyan"); rad.addColorStop(1, "transparent");
-        ctx.fillStyle = rad;
-        ctx.beginPath(); ctx.arc(200, y, 30, 0, Math.PI*2); ctx.fill();
-    }
 }
 
 function drawComputer() {
     ctx.fillStyle = "#1a1a1a"; ctx.fillRect(60, 150, 280, 180);
-    let screen = ctx.createLinearGradient(70, 160, 70, 320);
-    screen.addColorStop(0, "#001"); screen.addColorStop(1, "#003");
-    ctx.fillStyle = screen; ctx.fillRect(70, 160, 260, 150);
 }
 
 function drawMouse() {
-    let mGrd = ctx.createRadialGradient(200, 250, 20, 200, 250, 80);
-    mGrd.addColorStop(0, "#444"); mGrd.addColorStop(1, "#050505");
-    ctx.fillStyle = mGrd;
+    ctx.fillStyle = "#444";
     ctx.beginPath(); ctx.ellipse(200, 250, 55, 85, 0, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = "cyan"; ctx.fillRect(196, 200, 8, 25);
 }
 
 function drawSponge() {
@@ -210,18 +194,15 @@ function drawSponge() {
 
 function drawLaser() {
     if (isFiring && shockTimer <= 0) {
-        ctx.shadowBlur = 15; ctx.shadowColor = "cyan";
         ctx.strokeStyle = "white"; ctx.lineWidth = 4;
         ctx.beginPath(); ctx.moveTo(sponge.x + 25, sponge.y);
         ctx.lineTo(sponge.x + 25, 0); ctx.stroke();
-        ctx.shadowBlur = 0;
         dust = dust.filter(d => !(Math.abs(d.x - (sponge.x + 25)) < 18 && d.y < sponge.y));
     }
 }
 
 function createLevel() {
-    dust = [];
-    bubbles = [];
+    dust = []; bubbles = [];
     for(let i=0; i<25 + (level*5); i++) {
         dust.push({ x: Math.random()*300+50, y: Math.random()*300+100, r: 5 });
     }
@@ -239,34 +220,43 @@ function startGame() {
     document.getElementById("hud").style.display = "flex";
     canvas.style.display = "block";
     gameRunning = true;
+    gameFinished = false;
     level = 1; lives = 3;
+    confetti = [];
     createLevel();
     update();
 }
 
 function update() {
-    if(!gameRunning && confetti.length === 0) return;
-    
     ctx.clearRect(0, 0, 400, 600);
 
-    // Dibujar Confeti si existe
-    confetti.forEach((c, i) => {
-        ctx.fillStyle = c.color;
-        ctx.fillRect(c.x, c.y, c.r, c.r);
-        c.y += c.v;
-        if(c.y > 600) confetti.splice(i, 1);
-    });
-
-    if(!gameRunning) {
+    // Lógica si el juego terminó (Victoria)
+    if (gameFinished) {
+        confetti.forEach((c, i) => {
+            ctx.fillStyle = c.color;
+            ctx.fillRect(c.x, c.y, c.r, c.r);
+            c.y += c.v;
+        });
         ctx.fillStyle = "#00ff00";
         ctx.font = "10px 'Press Start 2P'";
         ctx.textAlign = "center";
         ctx.fillText("¡LA PC HA SIDO", 200, 280);
         ctx.fillText("CORRECTAMENTE LIMPIADA!", 200, 310);
-        if(confetti.length > 0) requestAnimationFrame(update);
+        requestAnimationFrame(update);
         return;
     }
 
+    // Lógica si perdió (Game Over)
+    if (!gameRunning) {
+        ctx.fillStyle = "white";
+        ctx.font = "20px 'Press Start 2P'";
+        ctx.textAlign = "center";
+        ctx.fillText("GAME OVER", 200, 300);
+        setTimeout(() => location.reload(), 2000);
+        return;
+    }
+
+    // Juego en curso
     ctx.textAlign = "start";
     if(level === 1) drawTower();
     else if(level === 2) drawComputer();
@@ -301,15 +291,15 @@ function update() {
     if(dust.length === 0) {
         level++;
         if(level > 3) {
-            gameRunning = false;
+            gameFinished = true;
             createConfetti();
-            update(); // Para iniciar animación de confeti
         } else {
             document.getElementById("lvl").innerText = level;
             createLevel();
         }
     }
-    if(gameRunning) requestAnimationFrame(update);
+    
+    requestAnimationFrame(update);
 }
 </script>
 </body>
