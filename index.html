@@ -1,248 +1,174 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <title>CLEANMANT</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
 <style>
 body{
     margin:0;
-    text-align:center;
-    background:radial-gradient(circle,#0f2027,#203a43,#2c5364);
-    font-family:'Press Start 2P', cursive;
+    background:linear-gradient(black,#0a0a2a);
     color:white;
+    text-align:center;
+    font-family:'Press Start 2P', cursive;
 }
 canvas{
     display:none;
     background:#111;
-    border:8px solid #00ffff;
-    border-radius:20px;
-    margin-top:20px;
-    box-shadow:0 0 30px #00ffff;
+    border:4px solid cyan;
+    box-shadow:0 0 20px cyan;
 }
 button{
-    padding:20px;
-    font-size:14px;
-    background:#00ffff;
-    color:black;
-    border:none;
-    border-radius:10px;
+    padding:15px;
     font-family:'Press Start 2P', cursive;
+    background:cyan;
+    border:none;
+    cursor:pointer;
 }
-#menu{ margin-top:120px; }
+h1{
+    color:cyan;
+}
 </style>
 </head>
 <body>
 
 <div id="menu">
-    <h1>CLEANMANT</h1>
-    <h3>LIMPIEZA EXTREMA ⚡</h3>
+    <h1>🧽 CLEANMANT ⚡</h1>
     <button onclick="startGame()">JUGAR</button>
 </div>
 
-<canvas id="game" width="420" height="600"></canvas>
+<canvas id="game" width="400" height="500"></canvas>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
-const menu = document.getElementById("menu");
 
-let sponge = {x:200,y:520,size:60};
-let dirt = [];
-let lasers = [];
-let sparks = [];
-let lives = 3;
 let level = 1;
-let win=false;
-let gameOver=false;
+let gameRunning = false;
+
+let sponge = {x:200,y:420,size:50};
+let dust = [];
+let laserX = 0;
+
+function createDust(amount){
+    dust = [];
+    for(let i=0;i<amount;i++){
+        dust.push({
+            x:Math.random()*350+20,
+            y:Math.random()*350+60,
+            r:Math.random()*8+5
+        });
+    }
+}
 
 function startGame(){
-    menu.style.display="none";
+    document.getElementById("menu").style.display="none";
     canvas.style.display="block";
-    setupLevel();
+    gameRunning = true;
+    level = 1;
+    createDust(25);
 }
 
-function setupLevel(){
-    dirt=[];
-    lasers=[];
-    win=false;
-
-    let dirtAmount = 15 + level*5;
-    for(let i=0;i<dirtAmount;i++){
-        dirt.push({
-            x:Math.random()*220+100,
-            y:Math.random()*300+150,
-            size:15+Math.random()*12
-        });
-    }
-
-    for(let i=0;i<level+1;i++){
-        lasers.push({
-            x:80,
-            y:250 + i*80,
-            width:260,
-            height:6
-        });
-    }
-}
-
-// Movimiento
-canvas.addEventListener("mousemove",e=>{
-    sponge.x = e.offsetX - 30;
-    sponge.y = e.offsetY - 30;
+canvas.addEventListener("mousemove", function(e){
+    sponge.x = e.offsetX - 25;
+    sponge.y = e.offsetY - 25;
 });
 
-canvas.addEventListener("touchmove",e=>{
-    const rect = canvas.getBoundingClientRect();
-    sponge.x = e.touches[0].clientX - rect.left - 30;
-    sponge.y = e.touches[0].clientY - rect.top - 30;
+canvas.addEventListener("touchmove", function(e){
+    let rect = canvas.getBoundingClientRect();
+    sponge.x = e.touches[0].clientX - rect.left - 25;
+    sponge.y = e.touches[0].clientY - rect.top - 25;
 });
 
-// Computadora
-function drawTower(){
-    let gradient = ctx.createLinearGradient(80,120,340,540);
-    gradient.addColorStop(0,"#444");
-    gradient.addColorStop(1,"#1a1a1a");
-    ctx.fillStyle=gradient;
-    ctx.fillRect(80,120,260,420);
-
-    ctx.strokeStyle="#00ffff";
-    ctx.lineWidth=3;
-    ctx.strokeRect(80,120,260,420);
-
-    ctx.fillStyle="#000";
-    ctx.fillRect(130,150,160,100);
-
-    ctx.fillStyle="#00ffcc";
-    ctx.font="10px 'Press Start 2P'";
-    ctx.fillText("SYSTEM READY",135,205);
+function drawComputer(){
+    ctx.fillStyle="#222";
+    ctx.fillRect(50,80,300,300);
+    ctx.fillStyle="#333";
+    ctx.fillRect(80,120,240,200);
 }
 
-// Polvo
-function drawDirt(){
-    ctx.fillStyle="#666";
-    dirt.forEach((d,i)=>{
-        ctx.beginPath();
-        ctx.arc(d.x,d.y,d.size,0,Math.PI*2);
-        ctx.fill();
-
-        if(
-            sponge.x < d.x+d.size &&
-            sponge.x+sponge.size > d.x-d.size &&
-            sponge.y < d.y+d.size &&
-            sponge.y+sponge.size > d.y-d.size
-        ){
-            dirt.splice(i,1);
-        }
-    });
-}
-
-// Láser
-function drawLasers(){
-    lasers.forEach(l=>{
-        ctx.shadowColor="red";
-        ctx.shadowBlur=20;
-        ctx.fillStyle="red";
-        ctx.fillRect(l.x,l.y,l.width,l.height);
-        ctx.shadowBlur=0;
-
-        if(
-            sponge.x < l.x+l.width &&
-            sponge.x+sponge.size > l.x &&
-            sponge.y < l.y+l.height &&
-            sponge.y+sponge.size > l.y
-        ){
-            createSpark(sponge.x+30,sponge.y+30);
-            lives--;
-            sponge.x=200;
-            sponge.y=520;
-        }
-    });
-}
-
-// Chispas
-function createSpark(x,y){
-    for(let i=0;i<12;i++){
-        sparks.push({
-            x:x,
-            y:y,
-            dx:(Math.random()-0.5)*10,
-            dy:(Math.random()-0.5)*10,
-            life:20
-        });
+function drawHeatsink(){
+    ctx.fillStyle="#555";
+    for(let i=0;i<10;i++){
+        ctx.fillRect(80+i*25,120,15,200);
     }
 }
 
-function drawSparks(){
-    ctx.fillStyle="yellow";
-    sparks.forEach((s,i)=>{
-        ctx.beginPath();
-        ctx.arc(s.x,s.y,3,0,Math.PI*2);
-        ctx.fill();
-        s.x+=s.dx;
-        s.y+=s.dy;
-        s.life--;
-        if(s.life<=0){
-            sparks.splice(i,1);
-        }
-    });
+function drawLaser(){
+    ctx.strokeStyle="red";
+    ctx.lineWidth=4;
+    ctx.shadowBlur=15;
+    ctx.shadowColor="red";
+    ctx.beginPath();
+    ctx.moveTo(laserX,0);
+    ctx.lineTo(laserX,500);
+    ctx.stroke();
+    ctx.shadowBlur=0;
 }
 
-// Esponja con forma real
 function drawSponge(){
-    let grad = ctx.createLinearGradient(sponge.x,sponge.y,sponge.x,sponge.y+sponge.size);
-    grad.addColorStop(0,"#ffe066");
-    grad.addColorStop(1,"#ffb703");
-    ctx.fillStyle=grad;
-
+    ctx.fillStyle="yellow";
     ctx.beginPath();
-    ctx.roundRect(sponge.x,sponge.y,sponge.size,sponge.size,20);
+    ctx.ellipse(sponge.x+25,sponge.y+25,30,20,0,0,Math.PI*2);
     ctx.fill();
-
-    ctx.fillStyle="#e09f3e";
-    ctx.beginPath();
-    ctx.roundRect(sponge.x+10,sponge.y+15,40,25,10);
-    ctx.fill();
+    ctx.fillStyle="orange";
+    ctx.fillRect(sponge.x+5,sponge.y+20,40,10);
 }
 
-// Loop
+function checkClean(){
+    dust = dust.filter(d=>{
+        let dx = sponge.x+25 - d.x;
+        let dy = sponge.y+25 - d.y;
+        return Math.sqrt(dx*dx+dy*dy) > 30;
+    });
+
+    if(dust.length===0){
+        level++;
+        if(level===2) createDust(35);
+        else if(level===3) createDust(45);
+        else{
+            alert("¡GANASTE CLEANMANT!");
+            location.reload();
+        }
+    }
+}
+
 function draw(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    if(!gameRunning) return;
 
-    drawTower();
-    drawDirt();
-    drawLasers();
-    drawSponge();
-    drawSparks();
+    ctx.clearRect(0,0,400,500);
 
-    ctx.fillStyle="white";
-    ctx.font="12px 'Press Start 2P'";
-    ctx.fillText("VIDAS: "+lives,20,30);
-    ctx.fillText("NIVEL: "+level,250,30);
+    if(level===1){
+        drawComputer();
+    }else if(level===2){
+        drawHeatsink();
+    }else{
+        drawComputer();
+        drawLaser();
+        laserX += 3;
+        if(laserX>400) laserX=0;
 
-    if(lives<=0){ gameOver=true; }
-
-    if(dirt.length==0 && !win){
-        win=true;
-        if(level<3){
-            level++;
-            setTimeout(setupLevel,1000);
+        if(sponge.x < laserX+5 && sponge.x+50 > laserX-5){
+            alert("⚡ TE DIO CORRIENTE ⚡");
+            location.reload();
         }
     }
 
-    if(gameOver){
-        ctx.fillStyle="red";
-        ctx.font="16px 'Press Start 2P'";
-        ctx.fillText("GAME OVER ⚡",90,330);
-    }
+    ctx.fillStyle="brown";
+    dust.forEach(d=>{
+        ctx.beginPath();
+        ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
+        ctx.fill();
+    });
 
-    if(level==3 && dirt.length==0){
-        ctx.fillStyle="#00ff00";
-        ctx.font="14px 'Press Start 2P'";
-        ctx.fillText("CLEANMANT COMPLETADO",30,330);
-    }
+    drawSponge();
+    checkClean();
+
+    ctx.fillStyle="cyan";
+    ctx.fillText("Nivel "+level,10,30);
 }
 
 setInterval(draw,30);
