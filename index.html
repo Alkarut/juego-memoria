@@ -1,192 +1,307 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CLEANMANT ULTIMATE - FULL HD</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <style>
-        body { margin: 0; background: #000; color: #fff; text-align: center; font-family: 'Press Start 2P', cursive; overflow: hidden; touch-action: none; }
-        #game-wrapper {
-            position: relative; margin: 10px auto;
-            width: 400px; height: 600px;
-            max-width: 95vw; max-height: 85vh;
-            border: 4px solid #00ffff;
-            box-shadow: 0 0 30px #00ffff;
-            background: radial-gradient(circle, #05101a 0%, #000 100%);
-        }
-        .ui-panel {
-            position: absolute; top: 0; width: 100%;
-            display: flex; justify-content: space-around;
-            padding: 15px 0; background: rgba(0,0,0,0.85);
-            font-size: 9px; color: #00ffff; z-index: 10;
-            border-bottom: 2px solid #00ffff;
-        }
-        .progress-bar { width: 100px; height: 10px; border: 1px solid #00ffff; background: #000; margin-top: 5px; }
-        #fill { background: #39ff14; height: 100%; width: 0%; box-shadow: 0 0 10px #39ff14; }
-        canvas { width: 100%; height: 100%; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CLEANMANT MOBILE - Virus Attack</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+body {
+    margin: 0;
+    background: radial-gradient(circle, #050a0c, #000);
+    color: white;
+    text-align: center;
+    font-family: 'Press Start 2P', cursive;
+    overflow: hidden;
+    touch-action: none;
+}
+canvas {
+    display: none;
+    background: #0a0a0a;
+    border: 4px solid #00ffff;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+    margin: 10px auto;
+    max-width: 95vw;
+    max-height: 80vh;
+}
+#menu { margin-top: 80px; padding: 20px; }
+button {
+    padding: 20px 40px;
+    font-family: 'Press Start 2P', cursive;
+    background: cyan;
+    border: none;
+    box-shadow: 0 5px 0 #008b8b;
+    cursor: pointer;
+    margin-top: 20px;
+}
+.hud {
+    color: cyan;
+    font-size: 10px;
+    margin: 10px;
+    display: none;
+    display: flex;
+    justify-content: space-around;
+}
+.shock { animation: shake 0.1s infinite; }
+@keyframes shake {
+    0% { transform: translate(3px, 3px); }
+    50% { transform: translate(-3px, -3px); }
+    100% { transform: translate(0, 0); }
+}
+</style>
 </head>
 <body>
 
-<div id="game-wrapper">
-    <div class="ui-panel">
-        <div>LVL: <span id="lvl">1</span>/5<br><small id="lvlName">TORRE</small></div>
-        <div>PROGRESO<div class="progress-bar"><div id="fill"></div></div></div>
-        <div>VIDAS<br><span id="vds">❤️❤️❤️</span></div>
-    </div>
-    <canvas id="gameCanvas" width="400" height="600"></canvas>
+<div id="menu">
+    <h1>🧽 CLEANMANT</h1>
+    <p style="font-size: 10px; line-height: 1.6;">
+        Limpia el PC.<br>
+        ¡Cuidado con las BURBUJAS!<br>
+        Mantén presionado para LÁSER.
+    </p>
+    <button onclick="startGame()">JUGAR</button>
 </div>
 
+<div id="hud" class="hud">
+    <span>NIVEL: <span id="lvl">1</span></span>
+    <span>VIDAS: <span id="vds">❤️❤️❤️</span></span>
+    <span>ENERGÍA: <span id="energy">██████████</span></span>
+</div>
+
+<canvas id="game" width="400" height="600"></canvas>
+
 <script>
-const canvas = document.getElementById("gameCanvas");
+const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-let level = 1, lives = 3, frame = 0, gameRunning = true;
-let sponge = { x: 175, y: 520, w: 50, h: 35 };
-let dust = [], viruses = [], fanAngle = 0;
+let level = 1;
+let lives = 3;
+let gameRunning = false;
+let isFiring = false;
+let shockTimer = 0;
+let laserEnergy = 100;
 
-const levelNames = ["UNIDAD DE TORRE", "PROCESADOR", "PERIFÉRICO MOUSE", "FUENTE DE PODER", "SISTEMA CRÍTICO"];
+let sponge = { x: 175, y: 500, size: 50 };
+let dust = [];
+let viruses = [];
+let bubbles = [];
+let powerUps = [];
 
-function initLevel() {
-    dust = []; viruses = [];
-    document.getElementById("lvlName").innerText = levelNames[level-1];
-    let amount = 20 + (level * 5);
-    for(let i=0; i<amount; i++) {
-        dust.push({ x: Math.random()*340+30, y: Math.random()*350+120, r: 4, active: true });
-    }
-    if(level >= 2) {
-        let vCount = level === 3 ? 1 : level; 
-        for(let i=0; i<vCount; i++) {
-            viruses.push({ x: Math.random()*300+50, y: 120, vx: 2.5, vy: 2, r: level === 3 ? 35 : 18, isBoss: level === 3 });
-        }
-    }
-}
-
-// --- DIBUJO DE PARTES DETALLADAS ---
-
-function drawUltraFan(x, y) {
-    ctx.save(); ctx.translate(x, y);
-    // Marco
-    ctx.fillStyle = "#1a1a1a"; ctx.beginPath(); ctx.roundRect(-110, -110, 220, 220, 15); ctx.fill();
-    ctx.strokeStyle = "#333"; ctx.stroke();
-    // Aspas
-    ctx.save(); fanAngle += 0.15; ctx.rotate(fanAngle);
-    ctx.fillStyle = "#333";
-    for(let i=0; i<7; i++) {
-        ctx.rotate((Math.PI*2)/7);
-        ctx.beginPath(); ctx.ellipse(50, 0, 45, 15, 0, 0, Math.PI*2); ctx.fill();
-    }
-    ctx.restore();
-    // Centro
-    ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(0, 0, 35, 0, Math.PI*2); ctx.fill();
-    ctx.restore();
-}
-
-function drawDetailedMouse(x, y) {
-    ctx.save(); ctx.translate(x, y);
-    // Cuerpo del Mouse
-    let grd = ctx.createLinearGradient(-40, 0, 40, 0);
-    grd.addColorStop(0, "#222"); grd.addColorStop(0.5, "#444"); grd.addColorStop(1, "#222");
-    ctx.fillStyle = grd;
-    ctx.beginPath(); ctx.ellipse(0, 0, 45, 70, 0, 0, Math.PI*2); ctx.fill();
-    // Botones y Rueda
-    ctx.fillStyle = "#111"; ctx.fillRect(-40, -60, 80, 5); 
-    ctx.fillStyle = "#00ffff"; ctx.shadowBlur = 10; ctx.shadowColor = "#00ffff";
-    ctx.fillRect(-5, -45, 10, 20); ctx.shadowBlur = 0;
-    ctx.restore();
-}
-
-function drawDetailedVirus(v) {
-    ctx.save(); ctx.translate(v.x, v.y);
-    // Pinchos
-    ctx.fillStyle = v.isBoss ? "#800080" : "#a00";
-    for(let i=0; i<10; i++) { ctx.rotate(Math.PI/5); ctx.fillRect(v.r-2, -3, 10, 6); }
-    // Cuerpo
-    let g = ctx.createRadialGradient(-5,-5,2,0,0,v.r);
-    g.addColorStop(0, v.isBoss ? "#ff00ff" : "#ff4444"); g.addColorStop(1, "#200");
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, v.r, 0, Math.PI*2); ctx.fill();
-    // Ojos
-    ctx.fillStyle = "white"; ctx.fillRect(-8, -8, 6, 6); ctx.fillRect(2, -8, 6, 6);
-    ctx.restore();
-}
-
-// --- BUCLE PRINCIPAL ---
-
-canvas.addEventListener("touchmove", (e) => {
+function moveSponge(e) {
     e.preventDefault();
+    let clientX, clientY;
+    if (e.touches) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+    } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+    }
     let rect = canvas.getBoundingClientRect();
-    let t = e.touches[0];
-    sponge.x = (t.clientX - rect.left) * (400/rect.width) - 25;
-    sponge.y = (t.clientY - rect.top) * (600/rect.height) - 20;
-});
-
-function loop() {
-    if(!gameRunning) return;
-    ctx.clearRect(0, 0, 400, 600);
-    
-    // Fondo de circuitos tenue
-    ctx.strokeStyle = "rgba(0, 255, 255, 0.05)";
-    for(let i=0; i<400; i+=40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,600); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(400,i); ctx.stroke(); }
-
-    // Dibujo según nivel
-    if(level === 1 || level === 5) drawUltraFan(200, 280);
-    if(level === 3) drawDetailedMouse(200, 280);
-    if(level === 4) { // Fuente de poder (cables con chispas)
-        ctx.strokeStyle = "yellow"; ctx.lineWidth = 4;
-        if(Math.sin(frame*0.1) > 0) {
-            ctx.shadowBlur = 15; ctx.shadowColor = "white";
-            ctx.beginPath(); ctx.moveTo(0, 200); ctx.lineTo(400, 200); ctx.stroke();
-            if(Math.abs(sponge.y - 200) < 20) lives -= 0.02;
-        }
-    }
-
-    // Láser
-    ctx.shadowBlur = 20; ctx.shadowColor = "#00ffff"; ctx.strokeStyle = "white"; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.moveTo(sponge.x+25, sponge.y); ctx.lineTo(sponge.x+25, 0); ctx.stroke(); ctx.shadowBlur = 0;
-
-    // Polvo y Limpieza
-    ctx.fillStyle = "#5c4033";
-    let activeDust = 0;
-    dust.forEach(d => {
-        if(d.active) {
-            ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI*2); ctx.fill();
-            if(Math.hypot(sponge.x+25-d.x, sponge.y+17-d.y) < 30 || (Math.abs(d.x - (sponge.x+25)) < 15 && d.y < sponge.y)) d.active = false;
-            activeDust++;
-        }
-    });
-
-    // Virus
-    viruses.forEach(v => {
-        v.x += v.vx; v.y += v.vy;
-        if(v.x < 40 || v.x > 360) v.vx *= -1;
-        if(v.y < 100 || v.y > 400) v.vy *= -1;
-        drawDetailedVirus(v);
-        if(Math.hypot(sponge.x+25-v.x, sponge.y+17-v.y) < v.r + 20) lives -= 0.03;
-    });
-
-    // Esponja
-    ctx.fillStyle = "#ffd700"; ctx.shadowBlur = 15; ctx.shadowColor = "yellow";
-    ctx.beginPath(); ctx.roundRect(sponge.x, sponge.y, 50, 35, 8); ctx.fill(); ctx.shadowBlur = 0;
-
-    // UI
-    document.getElementById("vds").innerText = lives > 0 ? "❤️".repeat(Math.ceil(lives)) : "GAMEOVER";
-    document.getElementById("fill").style.width = ((dust.length - activeDust) / dust.length * 100) + "%";
-
-    if(lives <= 0) { alert("SISTEMA INFECTADO"); location.reload(); }
-    if(activeDust === 0) {
-        level++;
-        if(level > 5) { alert("¡HAS LIMPIADO CON ÉXITO LA PC!"); location.reload(); }
-        else { initLevel(); }
-        document.getElementById("lvl").innerText = level;
-    }
-
-    frame++;
-    requestAnimationFrame(loop);
+    let scaleX = canvas.width / rect.width;
+    let scaleY = canvas.height / rect.height;
+    sponge.x = (clientX - rect.left) * scaleX - 25;
+    sponge.y = (clientY - rect.top) * scaleY - (e.touches ? 80 : 25);
 }
 
-initLevel();
-loop();
+canvas.addEventListener("mousemove", moveSponge);
+canvas.addEventListener("touchmove", moveSponge);
+canvas.addEventListener("mousedown", () => isFiring = true);
+canvas.addEventListener("mouseup", () => isFiring = false);
+canvas.addEventListener("touchstart", (e) => { isFiring = true; moveSponge(e); });
+canvas.addEventListener("touchend", () => isFiring = false);
+
+function drawVirus(v) {
+    ctx.save();
+    ctx.translate(v.x, v.y);
+    if(v.type==="fast") ctx.fillStyle="#ff7700";
+    else if(v.type==="armored") ctx.fillStyle="#880000";
+    else ctx.fillStyle="#ff1111";
+
+    ctx.beginPath(); ctx.arc(0,0,v.r,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle = "#ff1111";
+    ctx.lineWidth = 2;
+    for(let i=0;i<8;i++){
+        let ang=(i/8)*Math.PI*2+(Date.now()/500);
+        ctx.beginPath(); ctx.moveTo(0,0);
+        ctx.lineTo(Math.cos(ang)*22, Math.sin(ang)*22); ctx.stroke();
+    }
+    ctx.fillStyle="white";
+    ctx.fillRect(-6,-5,4,4); ctx.fillRect(2,-5,4,4);
+    ctx.restore();
+
+    if(Math.random()<0.02) {
+        bubbles.push({ x:v.x, y:v.y, r:8+Math.random()*4, vy:3+level });
+    }
+}
+
+function drawBubbles() {
+    ctx.strokeStyle="rgba(0,255,255,0.8)";
+    ctx.lineWidth=2;
+    bubbles.forEach((b,i)=>{
+        b.y+=b.vy;
+        ctx.beginPath();
+        ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
+        ctx.stroke();
+        ctx.fillStyle="rgba(0,255,255,0.2)";
+        ctx.fill();
+        let dist=Math.hypot((sponge.x+25)-b.x,(sponge.y+17)-b.y);
+        if(dist<30 && shockTimer<=0){
+            bubbles.splice(i,1);
+            takeDamage();
+        }
+        if(b.y>600) bubbles.splice(i,1);
+    });
+}
+
+function takeDamage() {
+    lives--;
+    shockTimer=40;
+    canvas.classList.add("shock");
+    document.getElementById("vds").innerText="❤️".repeat(lives);
+    if(lives<=0){
+        alert("GAME OVER - Virus detectado");
+        location.reload();
+    }
+}
+
+function drawTower() {
+    let g=ctx.createLinearGradient(100,100,300,100);
+    g.addColorStop(0,"#111"); g.addColorStop(0.5,"#333"); g.addColorStop(1,"#111");
+    ctx.fillStyle=g; ctx.fillRect(100,100,200,350);
+}
+
+function drawComputer() {
+    ctx.fillStyle="#1a1a1a"; ctx.fillRect(60,150,280,180);
+    let screen=ctx.createLinearGradient(70,160,70,320);
+    screen.addColorStop(0,"#001"); screen.addColorStop(1,"#003");
+    ctx.fillStyle=screen; ctx.fillRect(70,160,260,150);
+}
+
+function drawMouse() {
+    let mGrd=ctx.createRadialGradient(200,250,20,200,250,80);
+    mGrd.addColorStop(0,"#444"); mGrd.addColorStop(1,"#050505");
+    ctx.fillStyle=mGrd;
+    ctx.beginPath(); ctx.ellipse(200,250,55,85,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle="cyan"; ctx.fillRect(196,200,8,25);
+}
+
+function drawSponge() {
+    ctx.fillStyle=(shockTimer>0 && shockTimer%2===0)?"white":"#ffd700";
+    ctx.beginPath();
+    ctx.roundRect(sponge.x,sponge.y,50,35,8);
+    ctx.fill();
+}
+
+function drawLaser() {
+    if(isFiring && laserEnergy>0 && shockTimer<=0){
+        ctx.shadowBlur=15; ctx.shadowColor="cyan";
+        ctx.strokeStyle="white"; ctx.lineWidth=4;
+        ctx.beginPath(); ctx.moveTo(sponge.x+25,sponge.y);
+        ctx.lineTo(sponge.x+25,0); ctx.stroke();
+        ctx.shadowBlur=0;
+        dust=dust.filter(d=>(Math.abs(d.x-(sponge.x+25))>18 || d.y>sponge.y));
+        laserEnergy--;
+    }
+    if(!isFiring && laserEnergy<100){
+        laserEnergy+=0.5;
+    }
+    let bars=Math.floor(laserEnergy/10);
+    document.getElementById("energy").innerText="█".repeat(bars)+" ".repeat(10-bars);
+}
+
+function createLevel() {
+    dust=[]; bubbles=[]; powerUps=[];
+    for(let i=0;i<25+(level*5);i++){
+        dust.push({x:Math.random()*300+50,y:Math.random()*300+100,r:5,vy:Math.random()*0.2-0.1});
+    }
+    viruses=[];
+    for(let i=0;i<level+2;i++){
+        let type=Math.random()<0.4?"fast":Math.random()<0.6?"armored":"normal";
+        viruses.push({
+            x:Math.random()*350, y:Math.random()*200,
+            vx:(Math.random()-0.5)(type==="fast"?6:3), vy:(Math.random()-0.5)(type==="fast"?6:3),
+            r:12, type:type, health:type==="armored"?3:1
+        });
+    }
+    // Power-ups aleatorios
+    if(Math.random()<0.5){
+        powerUps.push({x:Math.random()*300+50, y:Math.random()*300+100, type:"heart"});
+    }
+    if(Math.random()<0.5){
+        powerUps.push({x:Math.random()*300+50, y:Math.random()*300+100, type:"superlaser"});
+    }
+}
+
+function drawPowerUps() {
+    powerUps.forEach((p,i)=>{
+        ctx.fillStyle=p.type==="heart"?"red":"cyan";
+        ctx.beginPath(); ctx.arc(p.x,p.y,12,0,Math.PI*2); ctx.fill();
+        let dist=Math.hypot((sponge.x+25)-p.x,(sponge.y+17)-p.y);
+        if(dist<25){
+            if(p.type==="heart"){ lives=Math.min(lives+1,3); document.getElementById("vds").innerText="❤️".repeat(lives);}
+            if(p.type==="superlaser"){ laserEnergy=Math.min(laserEnergy+50,100);}
+            powerUps.splice(i,1);
+        }
+    });
+}
+
+function update() {
+    if(!gameRunning) return;
+    ctx.clearRect(0,0,400,600);
+
+    if(level===1) drawTower();
+    else if(level===2) drawComputer();
+    else drawMouse();
+
+    dust.forEach(d=>{ d.y+=d.vy; ctx.fillStyle="#8b4513"; ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,Math.PI*2); ctx.fill(); });
+
+    viruses.forEach((v,i)=>{
+        v.x+=v.vx; v.y+=v.vy;
+        if(v.x<0||v.x>400)v.vx*=-1;
+        if(v.y<0||v.y>600)v.vy*=-1;
+        drawVirus(v);
+
+        // Colisión con esponja
+        let dist=Math.hypot((sponge.x+25)-v.x,(sponge.y+17)-v.y);
+        if(dist<32 && shockTimer<=0) takeDamage();
+
+        // Colisión con láser
+        if(isFiring && laserEnergy>0 && sponge.y>v.y){
+            v.health--;
+            if(v.health<=0) viruses.splice(i,1);
+        }
+    });
+
+    drawBubbles();
+    drawPowerUps();
+
+    if(shockTimer>0){ shockTimer--; if(shockTimer===0) canvas.classList.remove("shock"); }
+
+    drawLaser();
+    drawSponge();
+
+    if(dust.length===0){
+        level++;
+        if(level>3){ alert("¡PC LIMPIA! Eres un genio."); location.reload(); }
+        else{
+            document.getElementById("lvl").innerText=level;
+            createLevel();
+        }
+    }
+    requestAnimationFrame(update);
+}
+
+function startGame(){
+    document.getElementById("menu").style.display="none";
+    document.getElementById("hud").style.display="flex";
+    canvas.style.display="block";
+    gameRunning=true;
+    level=1;lives=3;laserEnergy=100;
+    createLevel();
+    update();
+}
 </script>
+
 </body>
 </html>
