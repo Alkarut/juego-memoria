@@ -3,34 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CLEANMANT ULTIMATE - PHOTO REALISTIC</title>
+    <title>CLEANMANT - Detalle Máximo</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        body { 
-            margin: 0; background: #000; color: #fff; 
-            text-align: center; font-family: 'Press Start 2P', cursive; 
-            overflow: hidden; touch-action: none; 
-        }
+        body { margin: 0; background: #000; color: #fff; text-align: center; font-family: 'Press Start 2P', cursive; overflow: hidden; touch-action: none; }
         #game-wrapper {
             position: relative; margin: 10px auto;
             width: 400px; height: 600px;
             max-width: 95vw; max-height: 85vh;
             border: 4px solid #00ffff;
             box-shadow: 0 0 25px #00ffff;
-            /* FONDO DE CIRCUITOS REALISTA */
-            background-image: url('https://img.freepik.com/vector-premium/fondo-placa-circuito-estilo-futurista_23-2148403402.jpg');
-            background-size: cover;
+            background: #020508;
         }
         .ui-panel {
             position: absolute; top: 0; width: 100%;
             display: flex; justify-content: space-around;
-            padding: 15px 0; background: rgba(0,0,0,0.8);
+            padding: 15px 0; background: rgba(0,0,0,0.85);
             font-size: 10px; color: #00ffff; z-index: 10;
             border-bottom: 2px solid #00ffff;
         }
-        .progress-bar { width: 120px; height: 12px; border: 1px solid #00ffff; background: #000; margin-top: 5px; }
-        #fill { background: #39ff14; height: 100%; width: 0%; box-shadow: 0 0 10px #39ff14; transition: width 0.3s; }
-        canvas { width: 100%; height: 100%; position: absolute; left: 0; top: 0; }
+        .progress-container { width: 120px; text-align: center; }
+        .progress-bar { width: 100%; height: 12px; border: 1px solid #00ffff; background: #000; margin-top: 5px; }
+        #fill { background: #39ff14; height: 100%; width: 0%; box-shadow: 0 0 10px #39ff14; }
+        canvas { width: 100%; height: 100%; }
     </style>
 </head>
 <body>
@@ -38,7 +33,7 @@
 <div id="game-wrapper">
     <div class="ui-panel">
         <span>LVL: <span id="lvl">1</span></span>
-        <div style="text-align:center;">
+        <div class="progress-container">
             <span>PROGRESO</span>
             <div class="progress-bar"><div id="fill"></div></div>
         </div>
@@ -51,124 +46,194 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// --- CARGA DE ASSETS REALISTAS ---
-const imgFan = new Image();
-imgFan.src = 'https://i.imgur.com/8y97U0X.png'; // Aspas de ventilador transparentes
-const imgFanCase = new Image();
-imgFanCase.src = 'https://i.imgur.com/mO3I7Vz.png'; // Marco del ventilador
-const imgVirus = new Image();
-imgVirus.src = 'https://i.imgur.com/6S3vE7X.png'; // Virus pixel-art rojo
-const imgSponge = new Image();
-imgSponge.src = 'https://i.imgur.com/yvD7R4E.png'; // Esponja limpia
-
 let level = 1, lives = 3, frame = 0, gameRunning = true;
-let sponge = { x: 175, y: 500, w: 50, h: 50 };
+let sponge = { x: 175, y: 520, w: 50, h: 35 };
 let dust = [], viruses = [], fanAngle = 0;
 
+// --- INICIALIZACIÓN ---
 function initLevel() {
     dust = []; viruses = [];
-    let amount = 15 + (level * 5);
+    let amount = 25 + (level * 5);
     for(let i=0; i<amount; i++) {
-        dust.push({ x: Math.random()*340+30, y: Math.random()*350+120, r: 5, active: true });
+        dust.push({ x: Math.random()*340+30, y: Math.random()*350+120, r: 4, active: true });
     }
     if(level >= 2) {
         for(let i=0; i<level; i++) {
-            viruses.push({ x: Math.random()*350, y: 100, vx: 2, vy: 1.5, r: 20 });
+            viruses.push({ x: Math.random()*350, y: 100, vx: 2.5, vy: 2, r: 18 });
         }
     }
 }
 
-function drawFan() {
-    // Dibujar el marco (estático)
-    ctx.drawImage(imgFanCase, 100, 200, 200, 200);
-    
-    // Dibujar las aspas (girando)
+// --- DIBUJO DETALLADO DEL VENTILADOR (Estilo Foto) ---
+function drawUltraFan(x, y) {
     ctx.save();
-    ctx.translate(200, 300);
-    fanAngle += 0.15; // Velocidad de giro
+    ctx.translate(x, y);
+
+    // 1. EL MARCO (Case)
+    ctx.fillStyle = "#1a1a1a";
+    ctx.strokeStyle = "#333";
+    ctx.lineWidth = 4;
+    // Base cuadrada con bordes redondeados
+    ctx.beginPath();
+    ctx.roundRect(-110, -110, 220, 220, 15);
+    ctx.fill();
+    ctx.stroke();
+
+    // Tornillos en las esquinas
+    ctx.fillStyle = "#444";
+    [-95, 95].forEach(sx => {
+        [-95, 95].forEach(sy => {
+            ctx.beginPath(); ctx.arc(sx, sy, 6, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = "#222"; ctx.stroke();
+        });
+    });
+
+    // 2. HUECO CIRCULAR (Sombreado interno)
+    let grd = ctx.createRadialGradient(0, 0, 80, 0, 0, 105);
+    grd.addColorStop(0, "#050505");
+    grd.addColorStop(1, "#252525");
+    ctx.fillStyle = grd;
+    ctx.beginPath(); ctx.arc(0, 0, 100, 0, Math.PI*2); ctx.fill();
+
+    // 3. LAS ASPAS (Girando)
+    ctx.save();
+    fanAngle += 0.12;
     ctx.rotate(fanAngle);
-    ctx.drawImage(imgFan, -90, -90, 180, 180);
+    
+    for(let i=0; i<7; i++) {
+        ctx.rotate((Math.PI * 2) / 7);
+        // Aspa con degradado para efecto de inclinación
+        let bladeGrd = ctx.createLinearGradient(0, 0, 90, 30);
+        bladeGrd.addColorStop(0, "#222");
+        bladeGrd.addColorStop(0.5, "#444");
+        bladeGrd.addColorStop(1, "#111");
+        
+        ctx.fillStyle = bladeGrd;
+        ctx.beginPath();
+        ctx.moveTo(10, 0);
+        ctx.bezierCurveTo(40, -40, 90, -20, 95, 0);
+        ctx.bezierCurveTo(90, 20, 40, 40, 10, 5);
+        ctx.fill();
+        // Brillo en el borde del aspa
+        ctx.strokeStyle = "rgba(255,255,255,0.05)";
+        ctx.stroke();
+    }
+    ctx.restore();
+
+    // 4. EL MOTOR CENTRAL (Eje stático arriba de las aspas)
+    let motorGrd = ctx.createRadialGradient(-5, -5, 0, 0, 0, 35);
+    motorGrd.addColorStop(0, "#555");
+    motorGrd.addColorStop(1, "#111");
+    ctx.fillStyle = motorGrd;
+    ctx.beginPath(); ctx.arc(0, 0, 35, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = "#00ffff33";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
     ctx.restore();
 }
 
+// --- DIBUJO DEL VIRUS (Detallado como la foto) ---
+function drawDetailedVirus(v) {
+    ctx.save();
+    ctx.translate(v.x, v.y);
+    
+    // Tentáculos/Pinchos
+    ctx.fillStyle = "#a00";
+    for(let i=0; i<12; i++) {
+        ctx.rotate(Math.PI/6);
+        ctx.fillRect(v.r - 2, -3, 8, 6);
+    }
+
+    // Cuerpo principal
+    let vGrd = ctx.createRadialGradient(-5, -5, 2, 0, 0, v.r);
+    vGrd.addColorStop(0, "#ff3333");
+    vGrd.addColorStop(1, "#800000");
+    ctx.fillStyle = vGrd;
+    ctx.beginPath(); ctx.arc(0, 0, v.r, 0, Math.PI*2); ctx.fill();
+
+    // Ojos enojados
+    ctx.fillStyle = "white";
+    ctx.fillRect(-8, -7, 6, 6); ctx.fillRect(2, -7, 6, 6);
+    ctx.fillStyle = "black";
+    ctx.fillRect(-6, -5, 3, 3); ctx.fillRect(4, -5, 3, 3);
+
+    ctx.restore();
+}
+
+// --- LOGICA PRINCIPAL ---
 canvas.addEventListener("touchmove", (e) => {
     e.preventDefault();
     let rect = canvas.getBoundingClientRect();
     let t = e.touches[0];
     sponge.x = (t.clientX - rect.left) * (400/rect.width) - 25;
-    sponge.y = (t.clientY - rect.top) * (600/rect.height) - 25;
+    sponge.y = (t.clientY - rect.top) * (600/rect.height) - 20;
 });
 
 function loop() {
     if(!gameRunning) return;
-    ctx.clearRect(0, 0, 400, 600);
-
-    // Fondo oscuro semi-transparente para resaltar circuitos
-    ctx.fillStyle = "rgba(0,0,0,0.4)";
+    // Fondo con grid tecnológico tenue
+    ctx.fillStyle = "#020508";
     ctx.fillRect(0,0,400,600);
+    
+    ctx.strokeStyle = "rgba(0, 255, 255, 0.03)";
+    for(let i=0; i<400; i+=25) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,600); ctx.stroke(); }
 
-    if(level === 1 || level >= 4) drawFan();
+    // Dibujar Ventilador Detallado
+    if(level === 1 || level === 5) drawUltraFan(200, 280);
 
-    // Láser Neón con resplandor
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = "#00ffff";
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(sponge.x + 25, sponge.y);
-    ctx.lineTo(sponge.x + 25, 0);
-    ctx.stroke();
+    // Láser Neón (Efecto de la foto)
+    ctx.shadowBlur = 20; ctx.shadowColor = "#00ffff";
+    ctx.strokeStyle = "white"; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(sponge.x+25, sponge.y); ctx.lineTo(sponge.x+25, 0); ctx.stroke();
     ctx.shadowBlur = 0;
 
-    // Polvo (Mugre)
-    ctx.fillStyle = "#553311";
+    // Polvo
+    ctx.fillStyle = "#5c4033";
     let activeDust = 0;
     dust.forEach(d => {
         if(d.active) {
             ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI*2); ctx.fill();
-            // Limpieza por contacto o láser
-            if(Math.hypot(sponge.x+25-d.x, sponge.y+25-d.y) < 35 || 
-               (Math.abs(d.x - (sponge.x+25)) < 15 && d.y < sponge.y)) {
-                d.active = false;
-            }
+            if(Math.hypot(sponge.x+25-d.x, sponge.y+17-d.y) < 30 || 
+               (Math.abs(d.x - (sponge.x+25)) < 15 && d.y < sponge.y)) d.active = false;
             activeDust++;
         }
     });
 
-    document.getElementById("fill").style.width = ((dust.length - activeDust) / dust.length * 100) + "%";
+    // UI Progreso
+    let total = 25 + (level * 5);
+    document.getElementById("fill").style.width = ((total - activeDust) / total * 100) + "%";
 
     // Virus
     viruses.forEach(v => {
         v.x += v.vx; v.y += v.vy;
-        if(v.x < 0 || v.x > 360) v.vx *= -1;
-        if(v.y < 50 || v.y > 400) v.vy *= -1;
-        ctx.drawImage(imgVirus, v.x, v.y, 40, 40);
-        if(Math.hypot(sponge.x+25-(v.x+20), sponge.y+25-(v.y+20)) < 40) {
-            lives--;
-            checkLives();
+        if(v.x < 20 || v.x > 380) v.vx *= -1;
+        if(v.y < 20 || v.y > 450) v.vy *= -1;
+        drawDetailedVirus(v);
+        if(Math.hypot(sponge.x+25-v.x, sponge.y+17-v.y) < 35) {
+            lives--; document.getElementById("vds").innerText = "❤️".repeat(lives);
+            if(lives <= 0) { alert("SISTEMA DAÑADO"); location.reload(); }
+            sponge.x = 175; sponge.y = 520;
         }
     });
 
-    // Personaje Esponja
-    ctx.drawImage(imgSponge, sponge.x, sponge.y, sponge.w, sponge.h);
+    // Personaje Esponja (Cleanmant)
+    ctx.fillStyle = "#ffd700";
+    ctx.shadowBlur = 10; ctx.shadowColor = "yellow";
+    ctx.beginPath(); ctx.roundRect(sponge.x, sponge.y, 50, 35, 8); ctx.fill();
+    ctx.shadowBlur = 0;
 
     if(activeDust === 0) {
         level++;
-        if(level > 5) { alert("¡PC LIMPIA! ERES UN EXPERTO."); location.reload(); }
+        if(level > 5) { alert("¡PC LIMPIA POR COMPLETO!"); location.reload(); }
         else { document.getElementById("lvl").innerText = level; initLevel(); }
     }
 
     requestAnimationFrame(loop);
 }
 
-function checkLives() {
-    document.getElementById("vds").innerText = "❤️".repeat(lives);
-    if(lives <= 0) { alert("SISTEMA COLAPSADO"); location.reload(); }
-    sponge.x = 175; sponge.y = 500;
-}
-
-// Iniciar juego cuando carguen las imágenes
-imgFan.onload = () => { initLevel(); loop(); };
+initLevel();
+loop();
 </script>
 </body>
 </html>
