@@ -1,104 +1,62 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TECNO BOT - Limpia la Computadora</title>
+<title>Juego Limpia la Computadora</title>
 
 <style>
 body{
     margin:0;
     text-align:center;
-    background:linear-gradient(to bottom,#cce6ff,#3399ff);
-    font-family:Arial, sans-serif;
+    background:#3399ff;
+    font-family:Arial;
 }
 canvas{
-    background:#f2f2f2;
-    border:5px solid #003366;
-    border-radius:15px;
     display:none;
+    background:#eee;
+    border:4px solid black;
 }
 button{
-    padding:12px 25px;
-    font-size:18px;
-    background:#003366;
-    color:white;
-    border:none;
-    border-radius:10px;
-}
-#menu{
-    margin-top:100px;
+    padding:15px;
+    font-size:20px;
 }
 </style>
 </head>
 <body>
 
 <div id="menu">
-    <h1>🖥️ TECNO BOT</h1>
-    <h2>Limpia la Computadora ⚡</h2>
+    <h1>🖥️ Limpia la Computadora ⚡</h1>
     <button onclick="startGame()">🎮 Jugar</button>
 </div>
 
-<canvas id="game" width="350" height="500"></canvas>
+<canvas id="game" width="400" height="500"></canvas>
 
 <script>
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
-const menu=document.getElementById("menu");
-
-let sponge={x:150,y:420,size:40};
-let dirt=[];
-let wires=[
-    {x:40,y:200,width:270,height:15}
-];
-let lives=3;
-let gameOver=false;
-
-for(let i=0;i<15;i++){
-    dirt.push({
-        x:Math.random()*260+50,
-        y:Math.random()*240+80,
-        size:15
-    });
-}
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
 function startGame(){
-    menu.style.display="none";
+    document.getElementById("menu").style.display="none";
     canvas.style.display="block";
 }
 
+let sponge = {x:180,y:400,size:40};
+
+canvas.addEventListener("mousemove", function(e){
+    sponge.x = e.offsetX - 20;
+    sponge.y = e.offsetY - 20;
+});
+
 function draw(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.clearRect(0,0,400,500);
 
-    ctx.fillStyle="#666";
-    ctx.fillRect(40,50,270,380);
-
-    ctx.fillStyle="brown";
-    dirt.forEach(d=>{
-        ctx.beginPath();
-        ctx.arc(d.x,d.y,d.size,0,Math.PI*2);
-        ctx.fill();
-    });
-
-    ctx.fillStyle="red";
-    wires.forEach(w=>{
-        ctx.fillRect(w.x,w.y,w.width,w.height);
-    });
+    ctx.fillStyle="gray";
+    ctx.fillRect(50,50,300,350);
 
     ctx.fillStyle="yellow";
     ctx.fillRect(sponge.x,sponge.y,sponge.size,sponge.size);
-
-    if(gameOver){
-        ctx.fillStyle="red";
-        ctx.font="30px Arial";
-        ctx.fillText("GAME OVER",80,250);
-    }
 }
-
-canvas.addEventListener("mousemove",e=>{
-    sponge.x=e.offsetX-20;
-    sponge.y=e.offsetY-20;
-});
 
 setInterval(draw,30);
 </script>
