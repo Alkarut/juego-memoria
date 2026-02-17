@@ -2,46 +2,51 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CLEANMANT PRO - Ultra Detail</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CLEANMANT MOBILE</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
-            background: radial-gradient(circle, #050a0c, #000);
+            background: #000;
             color: white;
             text-align: center;
             font-family: 'Press Start 2P', cursive;
-            overflow: hidden;
+            overflow: hidden; /* Evita el scroll al jugar */
+            touch-action: none; /* Evita zoom y gestos del navegador */
         }
         canvas {
             display: none;
             background: #0a0a0a;
-            border: 4px solid #00ffff;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
-            margin: 20px auto;
-            cursor: crosshair;
+            border: 2px solid cyan;
+            max-width: 95vw;
+            max-height: 80vh;
+            margin: 10px auto;
+            touch-action: none;
         }
-        #menu { margin-top: 100px; }
+        #menu { padding-top: 50px; }
         button {
-            padding: 20px 40px;
+            padding: 20px;
+            font-size: 18px;
             font-family: 'Press Start 2P', cursive;
             background: cyan;
             border: none;
-            box-shadow: 0 5px 0 #008b8b;
             cursor: pointer;
-            transition: 0.2s;
         }
-        button:hover { background: #00ffff; transform: scale(1.1); }
-        h1 { color: cyan; text-shadow: 2px 2px 10px cyan; }
+        .stats { color: cyan; font-size: 10px; margin: 10px; }
     </style>
 </head>
 <body>
 
 <div id="menu">
-    <h1>🧽 CLEANMANT ⚡</h1>
-    <p>Usa el mouse para limpiar.<br>¡MANTÉN CLIC PARA EL LÁSER!</p>
-    <button onclick="startGame()">INICIAR LIMPIEZA</button>
+    <h1>🧽 CLEANMANT</h1>
+    <p style="font-size: 10px; line-height: 1.5;">Arrastra para limpiar<br>Toca con 2 dedos o mantén<br>presionado para LÁSER</p>
+    <br>
+    <button onclick="startGame()">JUGAR</button>
+</div>
+
+<div class="stats" id="hud" style="display:none;">
+    NIVEL: <span id="lvl">1</span> | VIDAS: <span id="vds">❤️❤️❤️</span>
 </div>
 
 <canvas id="game" width="400" height="600"></canvas>
@@ -50,188 +55,125 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-let level = 1;
-let lives = 3;
-let sponge = { x: 200, y: 500, size: 50 };
-let dust = [];
-let gameRunning = false;
-let isFiring = false;
+let level = 1, lives = 3, gameRunning = false, isFiring = false;
+let shockTimer = 0;
+let sponge = { x: 175, y: 450, size: 50 };
+let dust = [], viruses = [];
 
-// Listeners para el Láser
+// --- CONTROLES MÓVILES Y PC ---
+function handleInput(e) {
+    e.preventDefault();
+    let clientX, clientY;
+    
+    if (e.touches) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+        isFiring = e.touches.length > 1; // Láser con 2 dedos
+    } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+    }
+
+    let rect = canvas.getBoundingClientRect();
+    let scaleX = canvas.width / rect.width;
+    let scaleY = canvas.height / rect.height;
+
+    // Ajustamos la esponja un poco más arriba del dedo para que se vea
+    sponge.x = (clientX - rect.left) * scaleX - 25;
+    sponge.y = (clientY - rect.top) * scaleY - 60; 
+}
+
+canvas.addEventListener("mousemove", handleInput);
 canvas.addEventListener("mousedown", () => isFiring = true);
 canvas.addEventListener("mouseup", () => isFiring = false);
-canvas.addEventListener("touchstart", (e) => { e.preventDefault(); isFiring = true; });
+
+canvas.addEventListener("touchstart", (e) => { isFiring = true; handleInput(e); });
+canvas.addEventListener("touchmove", handleInput);
 canvas.addEventListener("touchend", () => isFiring = false);
 
-function createDust(amount) {
-    dust = [];
-    for(let i=0; i<amount; i++) {
-        dust.push({
-            x: Math.random() * 300 + 50,
-            y: Math.random() * 300 + 100,
-            r: Math.random() * 6 + 4,
-            opacity: 1
-        });
-    }
-}
-
-function startGame() {
-    document.getElementById("menu").style.display = "none";
-    canvas.style.display = "block";
-    gameRunning = true;
-    level = 1;
-    createDust(30);
-}
-
-canvas.addEventListener("mousemove", (e) => {
-    let rect = canvas.getBoundingClientRect();
-    sponge.x = e.clientX - rect.left - 25;
-    sponge.y = e.clientY - rect.top - 25;
-});
-
-// --- DISEÑOS DETALLADOS ---
-
-function drawTower() {
-    // Gabinete con gradiente metálico
-    let g = ctx.createLinearGradient(100, 100, 300, 100);
-    g.addColorStop(0, "#111"); g.addColorStop(0.5, "#333"); g.addColorStop(1, "#111");
-    ctx.fillStyle = g;
-    ctx.fillRect(100, 100, 200, 350);
-    
-    // Panel de vidrio y brillo
-    ctx.strokeStyle = "rgba(0, 255, 255, 0.3)";
-    ctx.strokeRect(110, 110, 180, 330);
-    
-    // Ventiladores RGB
-    for(let i=0; i<3; i++) {
-        let y = 160 + (i * 90);
-        let rad = ctx.createRadialGradient(200, y, 2, 200, y, 30);
-        rad.addColorStop(0, "cyan"); rad.addColorStop(1, "transparent");
-        ctx.fillStyle = rad;
-        ctx.beginPath(); ctx.arc(200, y, 30, 0, Math.PI*2); ctx.fill();
-    }
-}
-
-function drawComputer() {
-    // Monitor UltraWide
-    ctx.fillStyle = "#1a1a1a";
-    ctx.fillRect(60, 150, 280, 180); // Marco
-    // Pantalla
-    let screen = ctx.createLinearGradient(70, 160, 70, 320);
-    screen.addColorStop(0, "#001"); screen.addColorStop(1, "#003");
-    ctx.fillStyle = screen;
-    ctx.fillRect(70, 160, 260, 150);
-    // Brillo de pantalla
-    ctx.fillStyle = "rgba(255,255,255,0.05)";
-    ctx.beginPath(); ctx.moveTo(70, 160); ctx.lineTo(200, 160); ctx.lineTo(70, 250); ctx.fill();
-    // Soporte
-    ctx.fillStyle = "#333";
-    ctx.fillRect(180, 330, 40, 40);
-    ctx.fillRect(140, 370, 120, 10);
-}
-
-function drawMouse() {
-    // Sombra
-    ctx.fillStyle = "rgba(0,0,0,0.4)";
-    ctx.beginPath(); ctx.ellipse(205, 260, 60, 80, 0, 0, Math.PI*2); ctx.fill();
-    // Cuerpo Ergonómico
-    let mGrd = ctx.createRadialGradient(200, 250, 20, 200, 250, 80);
-    mGrd.addColorStop(0, "#444"); mGrd.addColorStop(1, "#050505");
-    ctx.fillStyle = mGrd;
-    ctx.beginPath(); ctx.ellipse(200, 250, 55, 85, 0, 0, Math.PI*2); ctx.fill();
-    // Rueda Scroll LED
-    ctx.shadowBlur = 10; ctx.shadowColor = "cyan";
-    ctx.fillStyle = "cyan";
-    ctx.fillRect(196, 200, 8, 25);
-    ctx.shadowBlur = 0;
-}
-
-function drawSponge() {
-    ctx.fillStyle = "#ffd700";
-    ctx.beginPath();
-    ctx.roundRect(sponge.x, sponge.y, 50, 35, 10);
-    ctx.fill();
-    // Poros de la esponja
-    ctx.fillStyle = "#ccac00";
-    for(let i=0; i<3; i++) {
-        ctx.beginPath();
-        ctx.arc(sponge.x + 10 + (i*15), sponge.y + 15, 3, 0, Math.PI*2);
-        ctx.fill();
+// --- LÓGICA DE DIBUJO ---
+function drawVirus(v) {
+    ctx.fillStyle = "red";
+    ctx.beginPath(); ctx.arc(v.x, v.y, v.r, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = "red";
+    for(let i=0; i<8; i++){
+        let a = (i/8)*Math.PI*2;
+        ctx.beginPath(); ctx.moveTo(v.x, v.y);
+        ctx.lineTo(v.x+Math.cos(a)*18, v.y+Math.sin(a)*18); ctx.stroke();
     }
 }
 
 function drawLaser() {
-    if (isFiring) {
-        // Efecto visual del láser
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = "#0ff";
-        ctx.strokeStyle = "white";
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(sponge.x + 25, sponge.y);
-        ctx.lineTo(sponge.x + 25, 0);
-        ctx.stroke();
-        
-        // Rayo exterior cian
-        ctx.strokeStyle = "cyan";
-        ctx.lineWidth = 8;
-        ctx.globalAlpha = 0.3;
-        ctx.stroke();
-        ctx.globalAlpha = 1.0;
+    if (isFiring && shockTimer <= 0) {
+        ctx.shadowBlur = 15; ctx.shadowColor = "cyan";
+        ctx.strokeStyle = "white"; ctx.lineWidth = 6;
+        ctx.beginPath(); ctx.moveTo(sponge.x+25, sponge.y);
+        ctx.lineTo(sponge.x+25, 0); ctx.stroke();
         ctx.shadowBlur = 0;
-
-        // Limpiar polvo en el trayecto del láser
-        dust = dust.filter(d => {
-            let hit = (Math.abs(d.x - (sponge.x + 25)) < 15 && d.y < sponge.y);
-            return !hit;
-        });
+        dust = dust.filter(d => !(Math.abs(d.x - (sponge.x+25)) < 20 && d.y < sponge.y));
     }
 }
 
-function checkClean() {
-    // Limpieza normal por contacto con esponja
-    dust = dust.filter(d => {
-        let dx = (sponge.x + 25) - d.x;
-        let dy = (sponge.y + 17) - d.y;
-        return Math.sqrt(dx*dx + dy*dy) > 35;
+function createLevel() {
+    dust = []; viruses = [];
+    for(let i=0; i<20+level*5; i++) 
+        dust.push({x: Math.random()*340+30, y: Math.random()*300+100, r: 5});
+    for(let i=0; i<level; i++)
+        viruses.push({x: Math.random()*300, y: Math.random()*200, vx: 2, vy: 2, r: 12});
+}
+
+function startGame() {
+    document.getElementById("menu").style.display = "none";
+    document.getElementById("hud").style.display = "block";
+    canvas.style.display = "block";
+    gameRunning = true;
+    createLevel();
+    update();
+}
+
+function update() {
+    if(!gameRunning) return;
+    ctx.clearRect(0,0,400,600);
+
+    // Fondo: Monitor/PC simple
+    ctx.fillStyle = "#111"; ctx.fillRect(50, 100, 300, 350);
+    ctx.strokeStyle = "cyan"; ctx.strokeRect(60, 110, 280, 330);
+
+    // Polvo
+    ctx.fillStyle = "#8b4513";
+    dust.forEach(d => { ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI*2); ctx.fill(); });
+
+    // Virus
+    viruses.forEach(v => {
+        v.x += v.vx; v.y += v.vy;
+        if(v.x<0 || v.x>400) v.vx*=-1; if(v.y<0 || v.y>600) v.vy*=-1;
+        drawVirus(v);
+        let dist = Math.hypot(v.x-(sponge.x+25), v.y-(sponge.y+17));
+        if(dist < 30 && shockTimer <= 0) {
+            lives--; shockTimer = 30;
+            document.getElementById("vds").innerText = "❤️".repeat(lives);
+            if(lives<=0) { alert("GAME OVER"); location.reload(); }
+        }
     });
+
+    if(shockTimer > 0) shockTimer--;
+
+    // Esponja
+    ctx.fillStyle = (shockTimer > 0) ? "white" : "#ffd700";
+    ctx.fillRect(sponge.x, sponge.y, 50, 35);
+
+    drawLaser();
+
+    // Colisión polvo
+    dust = dust.filter(d => Math.hypot(d.x-(sponge.x+25), d.y-(sponge.y+17)) > 30);
 
     if(dust.length === 0) {
         level++;
-        if(level <= 3) createDust(30 + (level * 5));
-        else {
-            alert("¡PC TOTALMENTE LIMPIA! Eres el Cleanmant Maestro.");
-            location.reload();
-        }
+        document.getElementById("lvl").innerText = level;
+        createLevel();
     }
+    requestAnimationFrame(update);
 }
-
-function draw() {
-    if(!gameRunning) return;
-    ctx.clearRect(0, 0, 400, 600);
-
-    // Fondo según nivel
-    if(level === 1) drawTower();
-    else if(level === 2) drawComputer();
-    else drawMouse();
-
-    // Dibujar Polvo
-    ctx.fillStyle = "#8b4513";
-    dust.forEach(d => {
-        ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI*2); ctx.fill();
-    });
-
-    drawLaser();
-    drawSponge();
-    checkClean();
-
-    // HUD
-    ctx.fillStyle = "cyan";
-    ctx.font = "12px 'Press Start 2P'";
-    ctx.fillText("NIVEL: " + level, 20, 40);
-}
-
-setInterval(draw, 30);
 </script>
 </body>
 </html>
