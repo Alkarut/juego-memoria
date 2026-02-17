@@ -1,48 +1,50 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CLEANMANT</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-
-<style>
-body{
-    margin:0;
-    background:radial-gradient(circle,#0f2027,#203a43,#2c5364);
-    color:white;
-    text-align:center;
-    font-family:'Press Start 2P', cursive;
-}
-canvas{
-    display:none;
-    background:#111;
-    border:4px solid cyan;
-    box-shadow:0 0 20px cyan;
-    border-radius:10px;
-}
-button{
-    padding:15px;
-    font-family:'Press Start 2P', cursive;
-    background:cyan;
-    border:none;
-    cursor:pointer;
-}
-h1,h3{
-    color:cyan;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLEANMANT PRO - Ultra Detail</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            background: radial-gradient(circle, #050a0c, #000);
+            color: white;
+            text-align: center;
+            font-family: 'Press Start 2P', cursive;
+            overflow: hidden;
+        }
+        canvas {
+            display: none;
+            background: #0a0a0a;
+            border: 4px solid #00ffff;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            margin: 20px auto;
+            cursor: crosshair;
+        }
+        #menu { margin-top: 100px; }
+        button {
+            padding: 20px 40px;
+            font-family: 'Press Start 2P', cursive;
+            background: cyan;
+            border: none;
+            box-shadow: 0 5px 0 #008b8b;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:hover { background: #00ffff; transform: scale(1.1); }
+        h1 { color: cyan; text-shadow: 2px 2px 10px cyan; }
+    </style>
 </head>
 <body>
 
 <div id="menu">
     <h1>🧽 CLEANMANT ⚡</h1>
-    <h3>Limpieza Extrema</h3>
-    <button onclick="startGame()">JUGAR</button>
+    <p>Usa el mouse para limpiar.<br>¡MANTÉN CLIC PARA EL LÁSER!</p>
+    <button onclick="startGame()">INICIAR LIMPIEZA</button>
 </div>
 
-<canvas id="game" width="400" height="500"></canvas>
+<canvas id="game" width="400" height="600"></canvas>
 
 <script>
 const canvas = document.getElementById("game");
@@ -50,162 +52,186 @@ const ctx = canvas.getContext("2d");
 
 let level = 1;
 let lives = 3;
-let sponge = {x:200,y:420,size:50};
+let sponge = { x: 200, y: 500, size: 50 };
 let dust = [];
 let gameRunning = false;
+let isFiring = false;
 
-// Crear polvo
-function createDust(amount){
+// Listeners para el Láser
+canvas.addEventListener("mousedown", () => isFiring = true);
+canvas.addEventListener("mouseup", () => isFiring = false);
+canvas.addEventListener("touchstart", (e) => { e.preventDefault(); isFiring = true; });
+canvas.addEventListener("touchend", () => isFiring = false);
+
+function createDust(amount) {
     dust = [];
-    for(let i=0;i<amount;i++){
+    for(let i=0; i<amount; i++) {
         dust.push({
-            x:Math.random()*350+20,
-            y:Math.random()*350+60,
-            r:Math.random()*8+5
+            x: Math.random() * 300 + 50,
+            y: Math.random() * 300 + 100,
+            r: Math.random() * 6 + 4,
+            opacity: 1
         });
     }
 }
 
-// Iniciar juego
-function startGame(){
-    document.getElementById("menu").style.display="none";
-    canvas.style.display="block";
+function startGame() {
+    document.getElementById("menu").style.display = "none";
+    canvas.style.display = "block";
     gameRunning = true;
     level = 1;
-    lives = 3;
-    createDust(25); // Nivel 1: torre
+    createDust(30);
 }
 
-// Movimiento mouse/táctil
-canvas.addEventListener("mousemove", function(e){
-    sponge.x = e.offsetX - 25;
-    sponge.y = e.offsetY - 25;
-});
-canvas.addEventListener("touchmove", function(e){
+canvas.addEventListener("mousemove", (e) => {
     let rect = canvas.getBoundingClientRect();
-    sponge.x = e.touches[0].clientX - rect.left - 25;
-    sponge.y = e.touches[0].clientY - rect.top - 25;
+    sponge.x = e.clientX - rect.left - 25;
+    sponge.y = e.clientY - rect.top - 25;
 });
 
-// Dibujar objetos con detalle
-function drawTower(){
-    // Torre metálica
-    ctx.fillStyle="#222";
-    ctx.fillRect(100,100,200,300);
-    // Bordes
-    ctx.strokeStyle="#00ffff";
-    ctx.lineWidth=3;
-    ctx.strokeRect(100,100,200,300);
-    // Ventilador frontal
-    ctx.fillStyle="#444";
-    ctx.beginPath();
-    ctx.arc(200,200,30,0,Math.PI*2);
-    ctx.fill();
-    ctx.strokeStyle="#00ffff";
-    ctx.stroke();
-}
+// --- DISEÑOS DETALLADOS ---
 
-function drawComputer(){
-    // Base de PC
-    ctx.fillStyle="#111";
-    ctx.fillRect(100,120,200,150);
-    // Pantalla
-    ctx.fillStyle="#000";
-    ctx.fillRect(110,130,180,80);
-    // Brillo pantalla
-    ctx.fillStyle="#0ff";
-    ctx.font="10px 'Press Start 2P'";
-    ctx.fillText("PC SYSTEM",130,170);
-    // Teclado
-    ctx.fillStyle="#333";
-    ctx.fillRect(120,220,160,20);
-    // Teclas
-    ctx.fillStyle="#555";
-    for(let i=0;i<8;i++){
-        ctx.fillRect(122+i*20,222,15,15);
+function drawTower() {
+    // Gabinete con gradiente metálico
+    let g = ctx.createLinearGradient(100, 100, 300, 100);
+    g.addColorStop(0, "#111"); g.addColorStop(0.5, "#333"); g.addColorStop(1, "#111");
+    ctx.fillStyle = g;
+    ctx.fillRect(100, 100, 200, 350);
+    
+    // Panel de vidrio y brillo
+    ctx.strokeStyle = "rgba(0, 255, 255, 0.3)";
+    ctx.strokeRect(110, 110, 180, 330);
+    
+    // Ventiladores RGB
+    for(let i=0; i<3; i++) {
+        let y = 160 + (i * 90);
+        let rad = ctx.createRadialGradient(200, y, 2, 200, y, 30);
+        rad.addColorStop(0, "cyan"); rad.addColorStop(1, "transparent");
+        ctx.fillStyle = rad;
+        ctx.beginPath(); ctx.arc(200, y, 30, 0, Math.PI*2); ctx.fill();
     }
 }
 
-function drawMouse(){
-    // Base
-    ctx.fillStyle="#222";
-    ctx.beginPath();
-    ctx.ellipse(200,250,50,30,0,0,Math.PI*2);
-    ctx.fill();
-    // Botones
-    ctx.fillStyle="#555";
-    ctx.fillRect(175,240,50,10);
-    ctx.fillRect(175,255,50,10);
-    // Scroll
-    ctx.fillStyle="#0ff";
-    ctx.fillRect(198,247,4,6);
+function drawComputer() {
+    // Monitor UltraWide
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(60, 150, 280, 180); // Marco
+    // Pantalla
+    let screen = ctx.createLinearGradient(70, 160, 70, 320);
+    screen.addColorStop(0, "#001"); screen.addColorStop(1, "#003");
+    ctx.fillStyle = screen;
+    ctx.fillRect(70, 160, 260, 150);
+    // Brillo de pantalla
+    ctx.fillStyle = "rgba(255,255,255,0.05)";
+    ctx.beginPath(); ctx.moveTo(70, 160); ctx.lineTo(200, 160); ctx.lineTo(70, 250); ctx.fill();
+    // Soporte
+    ctx.fillStyle = "#333";
+    ctx.fillRect(180, 330, 40, 40);
+    ctx.fillRect(140, 370, 120, 10);
 }
 
-// Esponja 🧽 con detalle
-function drawSponge(){
-    let grad = ctx.createLinearGradient(sponge.x,sponge.y,sponge.x,sponge.y+sponge.size);
-    grad.addColorStop(0,"#ffe066");
-    grad.addColorStop(1,"#ffb703");
-    ctx.fillStyle=grad;
-
-    ctx.beginPath();
-    ctx.ellipse(sponge.x+25,sponge.y+25,30,20,0,0,Math.PI*2);
-    ctx.fill();
-
-    ctx.fillStyle="#e09f3e";
-    ctx.beginPath();
-    ctx.ellipse(sponge.x+25,sponge.y+25,20,10,0,0,Math.PI*2);
-    ctx.fill();
+function drawMouse() {
+    // Sombra
+    ctx.fillStyle = "rgba(0,0,0,0.4)";
+    ctx.beginPath(); ctx.ellipse(205, 260, 60, 80, 0, 0, Math.PI*2); ctx.fill();
+    // Cuerpo Ergonómico
+    let mGrd = ctx.createRadialGradient(200, 250, 20, 200, 250, 80);
+    mGrd.addColorStop(0, "#444"); mGrd.addColorStop(1, "#050505");
+    ctx.fillStyle = mGrd;
+    ctx.beginPath(); ctx.ellipse(200, 250, 55, 85, 0, 0, Math.PI*2); ctx.fill();
+    // Rueda Scroll LED
+    ctx.shadowBlur = 10; ctx.shadowColor = "cyan";
+    ctx.fillStyle = "cyan";
+    ctx.fillRect(196, 200, 8, 25);
+    ctx.shadowBlur = 0;
 }
 
-// Limpiar polvo
-function checkClean(){
-    dust = dust.filter(d=>{
-        let dx = sponge.x+25 - d.x;
-        let dy = sponge.y+25 - d.y;
-        return Math.sqrt(dx*dx+dy*dy) > 30;
+function drawSponge() {
+    ctx.fillStyle = "#ffd700";
+    ctx.beginPath();
+    ctx.roundRect(sponge.x, sponge.y, 50, 35, 10);
+    ctx.fill();
+    // Poros de la esponja
+    ctx.fillStyle = "#ccac00";
+    for(let i=0; i<3; i++) {
+        ctx.beginPath();
+        ctx.arc(sponge.x + 10 + (i*15), sponge.y + 15, 3, 0, Math.PI*2);
+        ctx.fill();
+    }
+}
+
+function drawLaser() {
+    if (isFiring) {
+        // Efecto visual del láser
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = "#0ff";
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(sponge.x + 25, sponge.y);
+        ctx.lineTo(sponge.x + 25, 0);
+        ctx.stroke();
+        
+        // Rayo exterior cian
+        ctx.strokeStyle = "cyan";
+        ctx.lineWidth = 8;
+        ctx.globalAlpha = 0.3;
+        ctx.stroke();
+        ctx.globalAlpha = 1.0;
+        ctx.shadowBlur = 0;
+
+        // Limpiar polvo en el trayecto del láser
+        dust = dust.filter(d => {
+            let hit = (Math.abs(d.x - (sponge.x + 25)) < 15 && d.y < sponge.y);
+            return !hit;
+        });
+    }
+}
+
+function checkClean() {
+    // Limpieza normal por contacto con esponja
+    dust = dust.filter(d => {
+        let dx = (sponge.x + 25) - d.x;
+        let dy = (sponge.y + 17) - d.y;
+        return Math.sqrt(dx*dx + dy*dy) > 35;
     });
 
-    if(dust.length===0){
+    if(dust.length === 0) {
         level++;
-        if(level===2) createDust(30);
-        else if(level===3) createDust(35);
-        else{
-            alert("¡GANASTE CLEANMANT!");
+        if(level <= 3) createDust(30 + (level * 5));
+        else {
+            alert("¡PC TOTALMENTE LIMPIA! Eres el Cleanmant Maestro.");
             location.reload();
         }
     }
 }
 
-// Loop principal
-function draw(){
+function draw() {
     if(!gameRunning) return;
+    ctx.clearRect(0, 0, 400, 600);
 
-    ctx.clearRect(0,0,400,500);
-
-    if(level===1) drawTower();
-    else if(level===2) drawComputer();
+    // Fondo según nivel
+    if(level === 1) drawTower();
+    else if(level === 2) drawComputer();
     else drawMouse();
 
-    // Polvo
-    ctx.fillStyle="brown";
-    dust.forEach(d=>{
-        ctx.beginPath();
-        ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
-        ctx.fill();
+    // Dibujar Polvo
+    ctx.fillStyle = "#8b4513";
+    dust.forEach(d => {
+        ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI*2); ctx.fill();
     });
 
+    drawLaser();
     drawSponge();
     checkClean();
 
     // HUD
-    ctx.fillStyle="cyan";
-    ctx.fillText("Nivel "+level,10,30);
-    ctx.fillText("Vidas "+lives,250,30);
+    ctx.fillStyle = "cyan";
+    ctx.font = "12px 'Press Start 2P'";
+    ctx.fillText("NIVEL: " + level, 20, 40);
 }
 
-setInterval(draw,30);
+setInterval(draw, 30);
 </script>
-
 </body>
 </html>
