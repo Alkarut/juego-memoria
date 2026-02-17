@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +10,7 @@
 <style>
 body{
     margin:0;
-    background:linear-gradient(black,#0a0a2a);
+    background:radial-gradient(circle,#0f2027,#203a43,#2c5364);
     color:white;
     text-align:center;
     font-family:'Press Start 2P', cursive;
@@ -20,6 +20,7 @@ canvas{
     background:#111;
     border:4px solid cyan;
     box-shadow:0 0 20px cyan;
+    border-radius:10px;
 }
 button{
     padding:15px;
@@ -28,7 +29,7 @@ button{
     border:none;
     cursor:pointer;
 }
-h1{
+h1,h3{
     color:cyan;
 }
 </style>
@@ -37,6 +38,7 @@ h1{
 
 <div id="menu">
     <h1>🧽 CLEANMANT ⚡</h1>
+    <h3>Limpieza Extrema</h3>
     <button onclick="startGame()">JUGAR</button>
 </div>
 
@@ -47,12 +49,12 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 let level = 1;
-let gameRunning = false;
-
+let lives = 3;
 let sponge = {x:200,y:420,size:50};
 let dust = [];
-let laserX = 0;
+let gameRunning = false;
 
+// Crear polvo
 function createDust(amount){
     dust = [];
     for(let i=0;i<amount;i++){
@@ -64,60 +66,60 @@ function createDust(amount){
     }
 }
 
+// Iniciar juego
 function startGame(){
     document.getElementById("menu").style.display="none";
     canvas.style.display="block";
     gameRunning = true;
     level = 1;
-    createDust(25);
+    lives = 3;
+    createDust(25); // torre
 }
 
+// Movimiento mouse/táctil
 canvas.addEventListener("mousemove", function(e){
     sponge.x = e.offsetX - 25;
     sponge.y = e.offsetY - 25;
 });
-
 canvas.addEventListener("touchmove", function(e){
     let rect = canvas.getBoundingClientRect();
     sponge.x = e.touches[0].clientX - rect.left - 25;
     sponge.y = e.touches[0].clientY - rect.top - 25;
 });
 
-function drawComputer(){
+// Dibujos por nivel
+function drawTower(){
     ctx.fillStyle="#222";
     ctx.fillRect(50,80,300,300);
     ctx.fillStyle="#333";
     ctx.fillRect(80,120,240,200);
 }
-
-function drawHeatsink(){
+function drawComputer(){
+    ctx.fillStyle="#222";
+    ctx.fillRect(80,120,240,150);
+    ctx.fillStyle="#000";
+    ctx.fillRect(110,140,180,80);
+    ctx.fillStyle="#0ff";
+    ctx.fillText("PC SYSTEM",130,180);
+}
+function drawMouse(){
     ctx.fillStyle="#555";
-    for(let i=0;i<10;i++){
-        ctx.fillRect(80+i*25,120,15,200);
-    }
-}
-
-function drawLaser(){
-    ctx.strokeStyle="red";
-    ctx.lineWidth=4;
-    ctx.shadowBlur=15;
-    ctx.shadowColor="red";
     ctx.beginPath();
-    ctx.moveTo(laserX,0);
-    ctx.lineTo(laserX,500);
-    ctx.stroke();
-    ctx.shadowBlur=0;
+    ctx.ellipse(200,250,50,30,0,0,Math.PI*2);
+    ctx.fill();
 }
 
+// Esponja 🧽
 function drawSponge(){
     ctx.fillStyle="yellow";
     ctx.beginPath();
     ctx.ellipse(sponge.x+25,sponge.y+25,30,20,0,0,Math.PI*2);
     ctx.fill();
     ctx.fillStyle="orange";
-    ctx.fillRect(sponge.x+5,sponge.y+20,40,10);
+    ctx.fillRect(sponge.x+10,sponge.y+20,30,10);
 }
 
+// Limpiar polvo
 function checkClean(){
     dust = dust.filter(d=>{
         let dx = sponge.x+25 - d.x;
@@ -127,8 +129,8 @@ function checkClean(){
 
     if(dust.length===0){
         level++;
-        if(level===2) createDust(35);
-        else if(level===3) createDust(45);
+        if(level===2) createDust(30);
+        else if(level===3) createDust(35);
         else{
             alert("¡GANASTE CLEANMANT!");
             location.reload();
@@ -136,26 +138,15 @@ function checkClean(){
     }
 }
 
+// Loop principal
 function draw(){
     if(!gameRunning) return;
 
     ctx.clearRect(0,0,400,500);
 
-    if(level===1){
-        drawComputer();
-    }else if(level===2){
-        drawHeatsink();
-    }else{
-        drawComputer();
-        drawLaser();
-        laserX += 3;
-        if(laserX>400) laserX=0;
-
-        if(sponge.x < laserX+5 && sponge.x+50 > laserX-5){
-            alert("⚡ TE DIO CORRIENTE ⚡");
-            location.reload();
-        }
-    }
+    if(level===1) drawTower();
+    else if(level===2) drawComputer();
+    else drawMouse();
 
     ctx.fillStyle="brown";
     dust.forEach(d=>{
@@ -167,8 +158,10 @@ function draw(){
     drawSponge();
     checkClean();
 
+    // HUD
     ctx.fillStyle="cyan";
     ctx.fillText("Nivel "+level,10,30);
+    ctx.fillText("Vidas "+lives,250,30);
 }
 
 setInterval(draw,30);
