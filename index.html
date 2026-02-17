@@ -73,7 +73,7 @@ function startGame(){
     gameRunning = true;
     level = 1;
     lives = 3;
-    createDust(25); // torre
+    createDust(25); // Nivel 1: torre
 }
 
 // Movimiento mouse/táctil
@@ -87,36 +87,75 @@ canvas.addEventListener("touchmove", function(e){
     sponge.y = e.touches[0].clientY - rect.top - 25;
 });
 
-// Dibujos por nivel
+// Dibujar objetos con detalle
 function drawTower(){
+    // Torre metálica
     ctx.fillStyle="#222";
-    ctx.fillRect(50,80,300,300);
-    ctx.fillStyle="#333";
-    ctx.fillRect(80,120,240,200);
+    ctx.fillRect(100,100,200,300);
+    // Bordes
+    ctx.strokeStyle="#00ffff";
+    ctx.lineWidth=3;
+    ctx.strokeRect(100,100,200,300);
+    // Ventilador frontal
+    ctx.fillStyle="#444";
+    ctx.beginPath();
+    ctx.arc(200,200,30,0,Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle="#00ffff";
+    ctx.stroke();
 }
+
 function drawComputer(){
-    ctx.fillStyle="#222";
-    ctx.fillRect(80,120,240,150);
+    // Base de PC
+    ctx.fillStyle="#111";
+    ctx.fillRect(100,120,200,150);
+    // Pantalla
     ctx.fillStyle="#000";
-    ctx.fillRect(110,140,180,80);
+    ctx.fillRect(110,130,180,80);
+    // Brillo pantalla
     ctx.fillStyle="#0ff";
-    ctx.fillText("PC SYSTEM",130,180);
-}
-function drawMouse(){
+    ctx.font="10px 'Press Start 2P'";
+    ctx.fillText("PC SYSTEM",130,170);
+    // Teclado
+    ctx.fillStyle="#333";
+    ctx.fillRect(120,220,160,20);
+    // Teclas
     ctx.fillStyle="#555";
+    for(let i=0;i<8;i++){
+        ctx.fillRect(122+i*20,222,15,15);
+    }
+}
+
+function drawMouse(){
+    // Base
+    ctx.fillStyle="#222";
     ctx.beginPath();
     ctx.ellipse(200,250,50,30,0,0,Math.PI*2);
     ctx.fill();
+    // Botones
+    ctx.fillStyle="#555";
+    ctx.fillRect(175,240,50,10);
+    ctx.fillRect(175,255,50,10);
+    // Scroll
+    ctx.fillStyle="#0ff";
+    ctx.fillRect(198,247,4,6);
 }
 
-// Esponja 🧽
+// Esponja 🧽 con detalle
 function drawSponge(){
-    ctx.fillStyle="yellow";
+    let grad = ctx.createLinearGradient(sponge.x,sponge.y,sponge.x,sponge.y+sponge.size);
+    grad.addColorStop(0,"#ffe066");
+    grad.addColorStop(1,"#ffb703");
+    ctx.fillStyle=grad;
+
     ctx.beginPath();
     ctx.ellipse(sponge.x+25,sponge.y+25,30,20,0,0,Math.PI*2);
     ctx.fill();
-    ctx.fillStyle="orange";
-    ctx.fillRect(sponge.x+10,sponge.y+20,30,10);
+
+    ctx.fillStyle="#e09f3e";
+    ctx.beginPath();
+    ctx.ellipse(sponge.x+25,sponge.y+25,20,10,0,0,Math.PI*2);
+    ctx.fill();
 }
 
 // Limpiar polvo
@@ -148,6 +187,7 @@ function draw(){
     else if(level===2) drawComputer();
     else drawMouse();
 
+    // Polvo
     ctx.fillStyle="brown";
     dust.forEach(d=>{
         ctx.beginPath();
