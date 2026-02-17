@@ -24,8 +24,7 @@
             max-width: 95vw;
             max-height: 80vh;
         }
-        #menu, #win-screen { margin-top: 80px; padding: 20px; }
-        #win-screen { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10; justify-content: center; align-items: center; flex-direction: column; }
+        #menu { margin-top: 80px; padding: 20px; }
         button {
             padding: 20px 40px;
             font-family: 'Press Start 2P', cursive;
@@ -40,6 +39,7 @@
             font-size: 10px;
             margin: 10px;
             display: none;
+            display: flex;
             justify-content: space-around;
         }
         .shock { animation: shake 0.1s infinite; }
@@ -58,12 +58,6 @@
     <button onclick="startGame()">JUGAR</button>
 </div>
 
-<div id="win-screen">
-    <h2 style="color: #00ff00; line-height: 1.5;">¡PC CORRECTAMENTE LIMPIADA!</h2>
-    <p>Eres un genio del mantenimiento.</p>
-    <button onclick="location.reload()">REINTENTAR</button>
-</div>
-
 <div id="hud" class="hud">
     <span>NIVEL: <span id="lvl">1</span></span>
     <span>VIDAS: <span id="vds">❤️❤️❤️</span></span>
@@ -80,17 +74,17 @@ let lives = 3;
 let gameRunning = false;
 let isFiring = false;
 let shockTimer = 0;
-let confetti = []; // Array para el confeti
+let confetti = [];
 
 let sponge = { x: 175, y: 500, size: 50 };
 let dust = [];
 let viruses = [];
-let bubbles = [];
+let bubbles = []; 
 
 function moveSponge(e) {
     e.preventDefault();
     let clientX, clientY;
-    if (e.touches && e.touches.length > 0) {
+    if (e.touches) {
         clientX = e.touches[0].clientX;
         clientY = e.touches[0].clientY;
     } else {
@@ -105,40 +99,23 @@ function moveSponge(e) {
 }
 
 canvas.addEventListener("mousemove", moveSponge);
-canvas.addEventListener("touchmove", moveSponge, {passive: false});
+canvas.addEventListener("touchmove", moveSponge);
 canvas.addEventListener("mousedown", () => isFiring = true);
 canvas.addEventListener("mouseup", () => isFiring = false);
-canvas.addEventListener("touchstart", (e) => { isFiring = true; moveSponge(e); }, {passive: false});
+canvas.addEventListener("touchstart", (e) => { isFiring = true; moveSponge(e); });
 canvas.addEventListener("touchend", () => isFiring = false);
 
+// Función para crear confeti
 function createConfetti() {
-    for(let i=0; i<100; i++) {
+    for(let i=0; i<80; i++) {
         confetti.push({
-            x: Math.random() * 400,
-            y: Math.random() * -600,
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height - canvas.height,
             r: Math.random() * 6 + 2,
-            d: Math.random() * 10,
             color: hsl(${Math.random() * 360}, 100%, 50%),
-            tilt: Math.random() * 10 - 10,
-            tiltAngle: 0,
-            tiltAngleIncremental: Math.random() * 0.07 + 0.05
+            v: Math.random() * 3 + 2
         });
     }
-}
-
-function drawConfetti() {
-    confetti.forEach((c) => {
-        ctx.beginPath();
-        ctx.lineWidth = c.r;
-        ctx.strokeStyle = c.color;
-        ctx.moveTo(c.x + c.tilt + (c.r / 4), c.y);
-        ctx.lineTo(c.x + c.tilt, c.y + c.tilt + (c.r / 4));
-        ctx.stroke();
-        
-        c.y += (Math.cos(c.d) + 3 + c.r / 2) / 2;
-        c.tiltAngle += c.tiltAngleIncremental;
-        c.tilt = Math.sin(c.tiltAngle) * 15;
-    });
 }
 
 function drawVirus(v) {
@@ -186,10 +163,13 @@ function takeDamage() {
     lives--;
     shockTimer = 40;
     canvas.classList.add("shock");
-    document.getElementById("vds").innerText = "❤️".repeat(Math.max(0, lives));
+    document.getElementById("vds").innerText = "❤️".repeat(lives);
     if(lives <= 0) {
-        alert("GAME OVER - Virus detectado");
-        location.reload();
+        gameRunning = false;
+        ctx.fillStyle = "white";
+        ctx.font = "20px 'Press Start 2P'";
+        ctx.fillText("GAME OVER", 80, 300);
+        setTimeout(() => location.reload(), 2000);
     }
 }
 
@@ -265,18 +245,29 @@ function startGame() {
 }
 
 function update() {
-    if(!gameRunning) {
-        // Seguir dibujando el confeti incluso si el juego principal se detuvo
-        if(confetti.length > 0) {
-            ctx.clearRect(0, 0, 400, 600);
-            drawConfetti();
-            requestAnimationFrame(update);
-        }
-        return;
-    }
+    if(!gameRunning && confetti.length === 0) return;
     
     ctx.clearRect(0, 0, 400, 600);
 
+    // Dibujar Confeti si existe
+    confetti.forEach((c, i) => {
+        ctx.fillStyle = c.color;
+        ctx.fillRect(c.x, c.y, c.r, c.r);
+        c.y += c.v;
+        if(c.y > 600) confetti.splice(i, 1);
+    });
+
+    if(!gameRunning) {
+        ctx.fillStyle = "#00ff00";
+        ctx.font = "10px 'Press Start 2P'";
+        ctx.textAlign = "center";
+        ctx.fillText("¡LA PC HA SIDO", 200, 280);
+        ctx.fillText("CORRECTAMENTE LIMPIADA!", 200, 310);
+        if(confetti.length > 0) requestAnimationFrame(update);
+        return;
+    }
+
+    ctx.textAlign = "start";
     if(level === 1) drawTower();
     else if(level === 2) drawComputer();
     else drawMouse();
@@ -312,8 +303,7 @@ function update() {
         if(level > 3) {
             gameRunning = false;
             createConfetti();
-            document.getElementById("win-screen").style.display = "flex";
-            update(); // Llamada final para animar el confeti
+            update(); // Para iniciar animación de confeti
         } else {
             document.getElementById("lvl").innerText = level;
             createLevel();
