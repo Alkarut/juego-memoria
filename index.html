@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CLEANMANT - Detalle Máximo</title>
+    <title>CLEANMANT ULTIMATE - FULL HD</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body { margin: 0; background: #000; color: #fff; text-align: center; font-family: 'Press Start 2P', cursive; overflow: hidden; touch-action: none; }
@@ -12,18 +12,17 @@
             width: 400px; height: 600px;
             max-width: 95vw; max-height: 85vh;
             border: 4px solid #00ffff;
-            box-shadow: 0 0 25px #00ffff;
-            background: #020508;
+            box-shadow: 0 0 30px #00ffff;
+            background: radial-gradient(circle, #05101a 0%, #000 100%);
         }
         .ui-panel {
             position: absolute; top: 0; width: 100%;
             display: flex; justify-content: space-around;
             padding: 15px 0; background: rgba(0,0,0,0.85);
-            font-size: 10px; color: #00ffff; z-index: 10;
+            font-size: 9px; color: #00ffff; z-index: 10;
             border-bottom: 2px solid #00ffff;
         }
-        .progress-container { width: 120px; text-align: center; }
-        .progress-bar { width: 100%; height: 12px; border: 1px solid #00ffff; background: #000; margin-top: 5px; }
+        .progress-bar { width: 100px; height: 10px; border: 1px solid #00ffff; background: #000; margin-top: 5px; }
         #fill { background: #39ff14; height: 100%; width: 0%; box-shadow: 0 0 10px #39ff14; }
         canvas { width: 100%; height: 100%; }
     </style>
@@ -32,12 +31,9 @@
 
 <div id="game-wrapper">
     <div class="ui-panel">
-        <span>LVL: <span id="lvl">1</span></span>
-        <div class="progress-container">
-            <span>PROGRESO</span>
-            <div class="progress-bar"><div id="fill"></div></div>
-        </div>
-        <span>VIDAS: <span id="vds">❤️❤️❤️</span></span>
+        <div>LVL: <span id="lvl">1</span>/5<br><small id="lvlName">TORRE</small></div>
+        <div>PROGRESO<div class="progress-bar"><div id="fill"></div></div></div>
+        <div>VIDAS<br><span id="vds">❤️❤️❤️</span></div>
     </div>
     <canvas id="gameCanvas" width="400" height="600"></canvas>
 </div>
@@ -50,118 +46,73 @@ let level = 1, lives = 3, frame = 0, gameRunning = true;
 let sponge = { x: 175, y: 520, w: 50, h: 35 };
 let dust = [], viruses = [], fanAngle = 0;
 
-// --- INICIALIZACIÓN ---
+const levelNames = ["UNIDAD DE TORRE", "PROCESADOR", "PERIFÉRICO MOUSE", "FUENTE DE PODER", "SISTEMA CRÍTICO"];
+
 function initLevel() {
     dust = []; viruses = [];
-    let amount = 25 + (level * 5);
+    document.getElementById("lvlName").innerText = levelNames[level-1];
+    let amount = 20 + (level * 5);
     for(let i=0; i<amount; i++) {
         dust.push({ x: Math.random()*340+30, y: Math.random()*350+120, r: 4, active: true });
     }
     if(level >= 2) {
-        for(let i=0; i<level; i++) {
-            viruses.push({ x: Math.random()*350, y: 100, vx: 2.5, vy: 2, r: 18 });
+        let vCount = level === 3 ? 1 : level; 
+        for(let i=0; i<vCount; i++) {
+            viruses.push({ x: Math.random()*300+50, y: 120, vx: 2.5, vy: 2, r: level === 3 ? 35 : 18, isBoss: level === 3 });
         }
     }
 }
 
-// --- DIBUJO DETALLADO DEL VENTILADOR (Estilo Foto) ---
+// --- DIBUJO DE PARTES DETALLADAS ---
+
 function drawUltraFan(x, y) {
-    ctx.save();
-    ctx.translate(x, y);
-
-    // 1. EL MARCO (Case)
-    ctx.fillStyle = "#1a1a1a";
-    ctx.strokeStyle = "#333";
-    ctx.lineWidth = 4;
-    // Base cuadrada con bordes redondeados
-    ctx.beginPath();
-    ctx.roundRect(-110, -110, 220, 220, 15);
-    ctx.fill();
-    ctx.stroke();
-
-    // Tornillos en las esquinas
-    ctx.fillStyle = "#444";
-    [-95, 95].forEach(sx => {
-        [-95, 95].forEach(sy => {
-            ctx.beginPath(); ctx.arc(sx, sy, 6, 0, Math.PI*2); ctx.fill();
-            ctx.strokeStyle = "#222"; ctx.stroke();
-        });
-    });
-
-    // 2. HUECO CIRCULAR (Sombreado interno)
-    let grd = ctx.createRadialGradient(0, 0, 80, 0, 0, 105);
-    grd.addColorStop(0, "#050505");
-    grd.addColorStop(1, "#252525");
-    ctx.fillStyle = grd;
-    ctx.beginPath(); ctx.arc(0, 0, 100, 0, Math.PI*2); ctx.fill();
-
-    // 3. LAS ASPAS (Girando)
-    ctx.save();
-    fanAngle += 0.12;
-    ctx.rotate(fanAngle);
-    
+    ctx.save(); ctx.translate(x, y);
+    // Marco
+    ctx.fillStyle = "#1a1a1a"; ctx.beginPath(); ctx.roundRect(-110, -110, 220, 220, 15); ctx.fill();
+    ctx.strokeStyle = "#333"; ctx.stroke();
+    // Aspas
+    ctx.save(); fanAngle += 0.15; ctx.rotate(fanAngle);
+    ctx.fillStyle = "#333";
     for(let i=0; i<7; i++) {
-        ctx.rotate((Math.PI * 2) / 7);
-        // Aspa con degradado para efecto de inclinación
-        let bladeGrd = ctx.createLinearGradient(0, 0, 90, 30);
-        bladeGrd.addColorStop(0, "#222");
-        bladeGrd.addColorStop(0.5, "#444");
-        bladeGrd.addColorStop(1, "#111");
-        
-        ctx.fillStyle = bladeGrd;
-        ctx.beginPath();
-        ctx.moveTo(10, 0);
-        ctx.bezierCurveTo(40, -40, 90, -20, 95, 0);
-        ctx.bezierCurveTo(90, 20, 40, 40, 10, 5);
-        ctx.fill();
-        // Brillo en el borde del aspa
-        ctx.strokeStyle = "rgba(255,255,255,0.05)";
-        ctx.stroke();
+        ctx.rotate((Math.PI*2)/7);
+        ctx.beginPath(); ctx.ellipse(50, 0, 45, 15, 0, 0, Math.PI*2); ctx.fill();
     }
     ctx.restore();
-
-    // 4. EL MOTOR CENTRAL (Eje stático arriba de las aspas)
-    let motorGrd = ctx.createRadialGradient(-5, -5, 0, 0, 0, 35);
-    motorGrd.addColorStop(0, "#555");
-    motorGrd.addColorStop(1, "#111");
-    ctx.fillStyle = motorGrd;
-    ctx.beginPath(); ctx.arc(0, 0, 35, 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle = "#00ffff33";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
+    // Centro
+    ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(0, 0, 35, 0, Math.PI*2); ctx.fill();
     ctx.restore();
 }
 
-// --- DIBUJO DEL VIRUS (Detallado como la foto) ---
+function drawDetailedMouse(x, y) {
+    ctx.save(); ctx.translate(x, y);
+    // Cuerpo del Mouse
+    let grd = ctx.createLinearGradient(-40, 0, 40, 0);
+    grd.addColorStop(0, "#222"); grd.addColorStop(0.5, "#444"); grd.addColorStop(1, "#222");
+    ctx.fillStyle = grd;
+    ctx.beginPath(); ctx.ellipse(0, 0, 45, 70, 0, 0, Math.PI*2); ctx.fill();
+    // Botones y Rueda
+    ctx.fillStyle = "#111"; ctx.fillRect(-40, -60, 80, 5); 
+    ctx.fillStyle = "#00ffff"; ctx.shadowBlur = 10; ctx.shadowColor = "#00ffff";
+    ctx.fillRect(-5, -45, 10, 20); ctx.shadowBlur = 0;
+    ctx.restore();
+}
+
 function drawDetailedVirus(v) {
-    ctx.save();
-    ctx.translate(v.x, v.y);
-    
-    // Tentáculos/Pinchos
-    ctx.fillStyle = "#a00";
-    for(let i=0; i<12; i++) {
-        ctx.rotate(Math.PI/6);
-        ctx.fillRect(v.r - 2, -3, 8, 6);
-    }
-
-    // Cuerpo principal
-    let vGrd = ctx.createRadialGradient(-5, -5, 2, 0, 0, v.r);
-    vGrd.addColorStop(0, "#ff3333");
-    vGrd.addColorStop(1, "#800000");
-    ctx.fillStyle = vGrd;
-    ctx.beginPath(); ctx.arc(0, 0, v.r, 0, Math.PI*2); ctx.fill();
-
-    // Ojos enojados
-    ctx.fillStyle = "white";
-    ctx.fillRect(-8, -7, 6, 6); ctx.fillRect(2, -7, 6, 6);
-    ctx.fillStyle = "black";
-    ctx.fillRect(-6, -5, 3, 3); ctx.fillRect(4, -5, 3, 3);
-
+    ctx.save(); ctx.translate(v.x, v.y);
+    // Pinchos
+    ctx.fillStyle = v.isBoss ? "#800080" : "#a00";
+    for(let i=0; i<10; i++) { ctx.rotate(Math.PI/5); ctx.fillRect(v.r-2, -3, 10, 6); }
+    // Cuerpo
+    let g = ctx.createRadialGradient(-5,-5,2,0,0,v.r);
+    g.addColorStop(0, v.isBoss ? "#ff00ff" : "#ff4444"); g.addColorStop(1, "#200");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, v.r, 0, Math.PI*2); ctx.fill();
+    // Ojos
+    ctx.fillStyle = "white"; ctx.fillRect(-8, -8, 6, 6); ctx.fillRect(2, -8, 6, 6);
     ctx.restore();
 }
 
-// --- LOGICA PRINCIPAL ---
+// --- BUCLE PRINCIPAL ---
+
 canvas.addEventListener("touchmove", (e) => {
     e.preventDefault();
     let rect = canvas.getBoundingClientRect();
@@ -172,63 +123,65 @@ canvas.addEventListener("touchmove", (e) => {
 
 function loop() {
     if(!gameRunning) return;
-    // Fondo con grid tecnológico tenue
-    ctx.fillStyle = "#020508";
-    ctx.fillRect(0,0,400,600);
+    ctx.clearRect(0, 0, 400, 600);
     
-    ctx.strokeStyle = "rgba(0, 255, 255, 0.03)";
-    for(let i=0; i<400; i+=25) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,600); ctx.stroke(); }
+    // Fondo de circuitos tenue
+    ctx.strokeStyle = "rgba(0, 255, 255, 0.05)";
+    for(let i=0; i<400; i+=40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,600); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(400,i); ctx.stroke(); }
 
-    // Dibujar Ventilador Detallado
+    // Dibujo según nivel
     if(level === 1 || level === 5) drawUltraFan(200, 280);
+    if(level === 3) drawDetailedMouse(200, 280);
+    if(level === 4) { // Fuente de poder (cables con chispas)
+        ctx.strokeStyle = "yellow"; ctx.lineWidth = 4;
+        if(Math.sin(frame*0.1) > 0) {
+            ctx.shadowBlur = 15; ctx.shadowColor = "white";
+            ctx.beginPath(); ctx.moveTo(0, 200); ctx.lineTo(400, 200); ctx.stroke();
+            if(Math.abs(sponge.y - 200) < 20) lives -= 0.02;
+        }
+    }
 
-    // Láser Neón (Efecto de la foto)
-    ctx.shadowBlur = 20; ctx.shadowColor = "#00ffff";
-    ctx.strokeStyle = "white"; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.moveTo(sponge.x+25, sponge.y); ctx.lineTo(sponge.x+25, 0); ctx.stroke();
-    ctx.shadowBlur = 0;
+    // Láser
+    ctx.shadowBlur = 20; ctx.shadowColor = "#00ffff"; ctx.strokeStyle = "white"; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(sponge.x+25, sponge.y); ctx.lineTo(sponge.x+25, 0); ctx.stroke(); ctx.shadowBlur = 0;
 
-    // Polvo
+    // Polvo y Limpieza
     ctx.fillStyle = "#5c4033";
     let activeDust = 0;
     dust.forEach(d => {
         if(d.active) {
             ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI*2); ctx.fill();
-            if(Math.hypot(sponge.x+25-d.x, sponge.y+17-d.y) < 30 || 
-               (Math.abs(d.x - (sponge.x+25)) < 15 && d.y < sponge.y)) d.active = false;
+            if(Math.hypot(sponge.x+25-d.x, sponge.y+17-d.y) < 30 || (Math.abs(d.x - (sponge.x+25)) < 15 && d.y < sponge.y)) d.active = false;
             activeDust++;
         }
     });
 
-    // UI Progreso
-    let total = 25 + (level * 5);
-    document.getElementById("fill").style.width = ((total - activeDust) / total * 100) + "%";
-
     // Virus
     viruses.forEach(v => {
         v.x += v.vx; v.y += v.vy;
-        if(v.x < 20 || v.x > 380) v.vx *= -1;
-        if(v.y < 20 || v.y > 450) v.vy *= -1;
+        if(v.x < 40 || v.x > 360) v.vx *= -1;
+        if(v.y < 100 || v.y > 400) v.vy *= -1;
         drawDetailedVirus(v);
-        if(Math.hypot(sponge.x+25-v.x, sponge.y+17-v.y) < 35) {
-            lives--; document.getElementById("vds").innerText = "❤️".repeat(lives);
-            if(lives <= 0) { alert("SISTEMA DAÑADO"); location.reload(); }
-            sponge.x = 175; sponge.y = 520;
-        }
+        if(Math.hypot(sponge.x+25-v.x, sponge.y+17-v.y) < v.r + 20) lives -= 0.03;
     });
 
-    // Personaje Esponja (Cleanmant)
-    ctx.fillStyle = "#ffd700";
-    ctx.shadowBlur = 10; ctx.shadowColor = "yellow";
-    ctx.beginPath(); ctx.roundRect(sponge.x, sponge.y, 50, 35, 8); ctx.fill();
-    ctx.shadowBlur = 0;
+    // Esponja
+    ctx.fillStyle = "#ffd700"; ctx.shadowBlur = 15; ctx.shadowColor = "yellow";
+    ctx.beginPath(); ctx.roundRect(sponge.x, sponge.y, 50, 35, 8); ctx.fill(); ctx.shadowBlur = 0;
 
+    // UI
+    document.getElementById("vds").innerText = lives > 0 ? "❤️".repeat(Math.ceil(lives)) : "GAMEOVER";
+    document.getElementById("fill").style.width = ((dust.length - activeDust) / dust.length * 100) + "%";
+
+    if(lives <= 0) { alert("SISTEMA INFECTADO"); location.reload(); }
     if(activeDust === 0) {
         level++;
-        if(level > 5) { alert("¡PC LIMPIA POR COMPLETO!"); location.reload(); }
-        else { document.getElementById("lvl").innerText = level; initLevel(); }
+        if(level > 5) { alert("¡HAS LIMPIADO CON ÉXITO LA PC!"); location.reload(); }
+        else { initLevel(); }
+        document.getElementById("lvl").innerText = level;
     }
 
+    frame++;
     requestAnimationFrame(loop);
 }
 
