@@ -3,9 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-
 <title>CLEANMANT</title>
 
 <style>
@@ -33,9 +31,7 @@ button{
     border-radius:10px;
     font-family:'Press Start 2P', cursive;
 }
-#menu{
-    margin-top:120px;
-}
+#menu{ margin-top:120px; }
 </style>
 </head>
 <body>
@@ -53,47 +49,59 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const menu = document.getElementById("menu");
 
-let sponge = {x:180,y:520,size:60};
+let sponge = {x:200,y:520,size:60};
 let dirt = [];
-let lasers = [
-    {x:80,y:280,width:260,height:6},
-    {x:80,y:400,width:260,height:6}
-];
-let lives = 3;
+let lasers = [];
 let sparks = [];
+let lives = 3;
+let level = 1;
 let win=false;
 let gameOver=false;
-
-// Crear polvo
-for(let i=0;i<18;i++){
-    dirt.push({
-        x:Math.random()*220+100,
-        y:Math.random()*300+150,
-        size:15+Math.random()*12
-    });
-}
 
 function startGame(){
     menu.style.display="none";
     canvas.style.display="block";
+    setupLevel();
 }
 
-// Mouse
+function setupLevel(){
+    dirt=[];
+    lasers=[];
+    win=false;
+
+    let dirtAmount = 15 + level*5;
+    for(let i=0;i<dirtAmount;i++){
+        dirt.push({
+            x:Math.random()*220+100,
+            y:Math.random()*300+150,
+            size:15+Math.random()*12
+        });
+    }
+
+    for(let i=0;i<level+1;i++){
+        lasers.push({
+            x:80,
+            y:250 + i*80,
+            width:260,
+            height:6
+        });
+    }
+}
+
+// Movimiento
 canvas.addEventListener("mousemove",e=>{
     sponge.x = e.offsetX - 30;
     sponge.y = e.offsetY - 30;
 });
 
-// Touch
 canvas.addEventListener("touchmove",e=>{
     const rect = canvas.getBoundingClientRect();
     sponge.x = e.touches[0].clientX - rect.left - 30;
     sponge.y = e.touches[0].clientY - rect.top - 30;
 });
 
-// Dibujar computadora detallada
+// Computadora
 function drawTower(){
-    // cuerpo metálico
     let gradient = ctx.createLinearGradient(80,120,340,540);
     gradient.addColorStop(0,"#444");
     gradient.addColorStop(1,"#1a1a1a");
@@ -104,25 +112,12 @@ function drawTower(){
     ctx.lineWidth=3;
     ctx.strokeRect(80,120,260,420);
 
-    // pantalla
     ctx.fillStyle="#000";
-    ctx.fillRect(130,150,160,100);
-
-    let glow = ctx.createRadialGradient(210,200,10,210,200,80);
-    glow.addColorStop(0,"#00ffcc");
-    glow.addColorStop(1,"#001a1a");
-    ctx.fillStyle=glow;
     ctx.fillRect(130,150,160,100);
 
     ctx.fillStyle="#00ffcc";
     ctx.font="10px 'Press Start 2P'";
     ctx.fillText("SYSTEM READY",135,205);
-
-    // ventilación
-    ctx.fillStyle="#333";
-    for(let i=0;i<5;i++){
-        ctx.fillRect(120,300+i*15,180,5);
-    }
 }
 
 // Polvo
@@ -144,11 +139,11 @@ function drawDirt(){
     });
 }
 
-// Láser brillante
+// Láser
 function drawLasers(){
     lasers.forEach(l=>{
         ctx.shadowColor="red";
-        ctx.shadowBlur=15;
+        ctx.shadowBlur=20;
         ctx.fillStyle="red";
         ctx.fillRect(l.x,l.y,l.width,l.height);
         ctx.shadowBlur=0;
@@ -161,7 +156,7 @@ function drawLasers(){
         ){
             createSpark(sponge.x+30,sponge.y+30);
             lives--;
-            sponge.x=180;
+            sponge.x=200;
             sponge.y=520;
         }
     });
@@ -195,19 +190,24 @@ function drawSparks(){
     });
 }
 
-// Esponja detallada
+// Esponja con forma real
 function drawSponge(){
     let grad = ctx.createLinearGradient(sponge.x,sponge.y,sponge.x,sponge.y+sponge.size);
     grad.addColorStop(0,"#ffe066");
     grad.addColorStop(1,"#ffb703");
     ctx.fillStyle=grad;
-    ctx.fillRect(sponge.x,sponge.y,sponge.size,sponge.size);
+
+    ctx.beginPath();
+    ctx.roundRect(sponge.x,sponge.y,sponge.size,sponge.size,20);
+    ctx.fill();
 
     ctx.fillStyle="#e09f3e";
-    ctx.fillRect(sponge.x+15,sponge.y+15,30,30);
+    ctx.beginPath();
+    ctx.roundRect(sponge.x+10,sponge.y+15,40,25,10);
+    ctx.fill();
 }
 
-// Loop principal
+// Loop
 function draw(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
@@ -220,13 +220,16 @@ function draw(){
     ctx.fillStyle="white";
     ctx.font="12px 'Press Start 2P'";
     ctx.fillText("VIDAS: "+lives,20,30);
+    ctx.fillText("NIVEL: "+level,250,30);
 
-    if(lives<=0){
-        gameOver=true;
-    }
+    if(lives<=0){ gameOver=true; }
 
-    if(dirt.length==0){
+    if(dirt.length==0 && !win){
         win=true;
+        if(level<3){
+            level++;
+            setTimeout(setupLevel,1000);
+        }
     }
 
     if(gameOver){
@@ -235,10 +238,10 @@ function draw(){
         ctx.fillText("GAME OVER ⚡",90,330);
     }
 
-    if(win){
+    if(level==3 && dirt.length==0){
         ctx.fillStyle="#00ff00";
         ctx.font="14px 'Press Start 2P'";
-        ctx.fillText("PC LIMPIA COMPLETA",40,330);
+        ctx.fillText("CLEANMANT COMPLETADO",30,330);
     }
 }
 
