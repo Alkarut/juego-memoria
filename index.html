@@ -68,11 +68,19 @@ button {
     <span>ENERGÍA: <span id="energy">██████████</span></span>
 </div>
 
-<canvas id="game" width="400" height="600"></canvas>
+<canvas id="game"></canvas>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
+
+// Ajustar canvas al tamaño de pantalla
+function resizeCanvas(){
+    canvas.width = window.innerWidth * 0.95;
+    canvas.height = window.innerHeight * 0.8;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
 
 let level = 1;
 let lives = 3;
@@ -86,6 +94,22 @@ let dust = [];
 let viruses = [];
 let bubbles = [];
 let powerUps = [];
+
+// Función para dibujar rectángulo redondeado compatible
+function drawRoundedRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+    ctx.fill();
+}
 
 function moveSponge(e) {
     e.preventDefault();
@@ -119,8 +143,8 @@ function drawVirus(v) {
     else ctx.fillStyle="#ff1111";
 
     ctx.beginPath(); ctx.arc(0,0,v.r,0,Math.PI*2); ctx.fill();
-    ctx.strokeStyle = "#ff1111";
-    ctx.lineWidth = 2;
+    ctx.strokeStyle="#ff1111";
+    ctx.lineWidth=2;
     for(let i=0;i<8;i++){
         let ang=(i/8)*Math.PI*2+(Date.now()/500);
         ctx.beginPath(); ctx.moveTo(0,0);
@@ -150,7 +174,7 @@ function drawBubbles() {
             bubbles.splice(i,1);
             takeDamage();
         }
-        if(b.y>600) bubbles.splice(i,1);
+        if(b.y>canvas.height) bubbles.splice(i,1);
     });
 }
 
@@ -188,9 +212,7 @@ function drawMouse() {
 
 function drawSponge() {
     ctx.fillStyle=(shockTimer>0 && shockTimer%2===0)?"white":"#ffd700";
-    ctx.beginPath();
-    ctx.roundRect(sponge.x,sponge.y,50,35,8);
-    ctx.fill();
+    drawRoundedRect(ctx, sponge.x, sponge.y, 50, 35, 8);
 }
 
 function drawLaser() {
@@ -220,11 +242,11 @@ function createLevel() {
         let type=Math.random()<0.4?"fast":Math.random()<0.6?"armored":"normal";
         viruses.push({
             x:Math.random()*350, y:Math.random()*200,
-            vx:(Math.random()-0.5)(type==="fast"?6:3), vy:(Math.random()-0.5)(type==="fast"?6:3),
+            vx:(Math.random()-0.5)*(type==="fast"?6:3),
+            vy:(Math.random()-0.5)*(type==="fast"?6:3),
             r:12, type:type, health:type==="armored"?3:1
         });
     }
-    // Power-ups aleatorios
     if(Math.random()<0.5){
         powerUps.push({x:Math.random()*300+50, y:Math.random()*300+100, type:"heart"});
     }
@@ -248,7 +270,7 @@ function drawPowerUps() {
 
 function update() {
     if(!gameRunning) return;
-    ctx.clearRect(0,0,400,600);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
 
     if(level===1) drawTower();
     else if(level===2) drawComputer();
@@ -258,15 +280,13 @@ function update() {
 
     viruses.forEach((v,i)=>{
         v.x+=v.vx; v.y+=v.vy;
-        if(v.x<0||v.x>400)v.vx*=-1;
-        if(v.y<0||v.y>600)v.vy*=-1;
+        if(v.x<0||v.x>canvas.width)v.vx*=-1;
+        if(v.y<0||v.y>canvas.height)v.vy*=-1;
         drawVirus(v);
 
-        // Colisión con esponja
         let dist=Math.hypot((sponge.x+25)-v.x,(sponge.y+17)-v.y);
         if(dist<32 && shockTimer<=0) takeDamage();
 
-        // Colisión con láser
         if(isFiring && laserEnergy>0 && sponge.y>v.y){
             v.health--;
             if(v.health<=0) viruses.splice(i,1);
