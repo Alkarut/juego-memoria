@@ -48,7 +48,7 @@
             50% { transform: translate(-3px, -3px); }
             100% { transform: translate(0, 0); }
         }
-        / Animación neón para el mensaje final /
+        /* Animación neón para el mensaje final */
         .neon {
             font-size: 20px;
             color: gold;
@@ -123,15 +123,14 @@ function drawVirus(v) {
     ctx.strokeStyle = "#ff1111";
     ctx.lineWidth = 3;
     for(let i=0; i<8; i++) {
-        let ang = (i/8)  Math.PI2 + (Date.now()/500);
+        let ang = (i/8) * Math.PI*2 + (Date.now()/500);
         ctx.beginPath(); ctx.moveTo(0,0);
-        ctx.lineTo(Math.cos(ang)22, Math.sin(ang)22); ctx.stroke();
+        ctx.lineTo(Math.cos(ang)*22, Math.sin(ang)*22); ctx.stroke();
     }
     ctx.fillStyle = "white";
     ctx.fillRect(-6, -5, 4, 4); ctx.fillRect(2, -5, 4, 4);
     ctx.restore();
 
-    // Más burbujas en niveles altos
     if(Math.random() < 0.02 + level*0.005) {
         bubbles.push({ x: v.x, y: v.y, r: 8, vy: 3 + level });
     }
@@ -169,28 +168,41 @@ function takeDamage() {
 }
 
 function drawTower() {
-    let g = ctx.createLinearGradient(100, 100, 300, 100);
-    g.addColorStop(0, "#111"); g.addColorStop(0.5, "#333"); g.addColorStop(1, "#111");
-    ctx.fillStyle = g; ctx.fillRect(100, 100, 200, 350);
-    for(let i=0; i<3; i++) {
-        let y = 160 + (i * 90);
-        let rad = ctx.createRadialGradient(200, y, 2, 200, y, 30);
-        rad.addColorStop(0, "cyan"); rad.addColorStop(1, "transparent");
-        ctx.fillStyle = rad;
-        ctx.beginPath(); ctx.arc(200, y, 30, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = "#333"; ctx.fillRect(100, 100, 200, 350);
+}
+function drawComputer() {
+    ctx.fillStyle = "#1a1a1a"; ctx.fillRect(60, 150, 280, 180);
+}
+function drawMouse() {
+    ctx.fillStyle = "#444"; ctx.beginPath(); ctx.ellipse(200, 250, 55, 85, 0, 0, Math.PI*2); ctx.fill();
+}
+
+function drawSponge() {
+    ctx.fillStyle = (shockTimer > 0 && shockTimer % 2 === 0) ? "white" : "#ffd700";
+    ctx.beginPath();
+    ctx.roundRect(sponge.x, sponge.y, 50, 35, 8);
+    ctx.fill();
+}
+
+function drawLaser() {
+    if (isFiring && shockTimer <= 0) {
+        ctx.shadowBlur = 15; ctx.shadowColor = "cyan";
+        ctx.strokeStyle = "white"; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(sponge.x + 25, sponge.y);
+        ctx.lineTo(sponge.x + 25, 0); ctx.stroke();
+        ctx.shadowBlur = 0;
+        dust = dust.filter(d => !(Math.abs(d.x - (sponge.x + 25)) < 18 && d.y < sponge.y));
     }
 }
 
-function drawComputer() {
-    ctx.fillStyle = "#1a1a1a"; ctx.fillRect(60, 150, 280, 180);
-    let screen = ctx.createLinearGradient(70, 160, 70, 320);
-    screen.addColorStop(0, "#001"); screen.addColorStop(1, "#003");
-    ctx.fillStyle = screen; ctx.fillRect(70, 160, 260, 150);
-}
-
-function drawMouse() {
-    let mGrd = ctx.createRadialGradient(200, 250, 20, 200, 250, 80);
-    mGrd.addColorStop(0, "#444"); mGrd.addColorStop(1, "#050505");
-    ctx.fillStyle = mGrd;
-    ctx.beginPath(); ctx.ellipse(200, 250, 55, 85, 0, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = "cyan"; ctx.fillRect(196, 200, 8, 25);
+function createLevel() {
+    dust = [];
+    bubbles = [];
+    for(let i=0; i<30 + (level*8); i++) {
+        dust.push({ x: Math.random()*300+50, y: Math.random()*300+100, r: 5 });
+    }
+    viruses = [];
+    for(let i=0; i<level+1; i++) {
+        viruses.push({
+            x: Math.random()*350, y: Math.random()*200,
+            vx:
