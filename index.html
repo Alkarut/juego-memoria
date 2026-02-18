@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+[8:34 p.m., 17/2/2026] Aℒℯ✘¡₷ 💚: <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -19,59 +19,80 @@
             display: none;
             background: #0a0a0a;
             border: 4px solid #00ffff;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
-            margin: 10px auto;
-            max-width: 95vw;
-            max-height: 80vh;
-        }
-        #menu { margin-top: 80px; padding: 20px; }
-        button {
-            padding: 20px 40px;
-            font-family: 'Press Start 2P', cursive;
-            background: cyan;
-            border: none;
-            box-shadow: 0 5px 0 #008b8b;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-        .hud {
-            color: cyan;
-            font-size: 10px;
-            margin: 10px;
-            display: none;
-            display: flex;
-            justify-content: space-around;
-        }
-        .shock { animation: shake 0.1s infinite; }
-        @keyframes shake {
-            0% { transform: translate(3px, 3px); }
-            50% { transform: translate(-3px, -3px); }
-            100% { transform: translate(0, 0); }
-        }
-        /* Animación neón para el mensaje final */
-        .neon {
-            font-size: 20px;
-            color: gold;
-            text-shadow: 0 0 5px #fff, 0 0 10px #ff0, 0 0 20px #ff0, 0 0 40px #ff0;
-            animation: flicker 1s infinite alternate;
-        }
-        @keyframes flicker {
-            from { opacity: 1; }
-            to { opacity: 0.6; }
-        }
-    </style>
+            box-shadow…
+[8:37 p.m., 17/2/2026] Aℒℯ✘¡₷ 💚: <!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CLEANMANT MOBILE - Virus Attack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      background: radial-gradient(circle, #050a0c, #000);
+      color: white;
+      text-align: center;
+      font-family: 'Press Start 2P', cursive;
+      overflow: hidden;
+      touch-action: none;
+    }
+    canvas {
+      display: none;
+      background: #0a0a0a;
+      border: 4px solid #00ffff;
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+      margin: 10px auto;
+      max-width: 95vw;
+      max-height: 80vh;
+    }
+    #menu { margin-top: 80px; padding: 20px; }
+    button {
+      padding: 20px 40px;
+      font-family: 'Press Start 2P', cursive;
+      background: cyan;
+      border: none;
+      box-shadow: 0 5px 0 #008b8b;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    .hud {
+      color: cyan;
+      font-size: 10px;
+      margin: 10px;
+      display: none;
+      display: flex;
+      justify-content: space-around;
+    }
+    .shock { animation: shake 0.1s infinite; }
+    @keyframes shake {
+      0% { transform: translate(3px, 3px); }
+      50% { transform: translate(-3px, -3px); }
+      100% { transform: translate(0, 0); }
+    }
+    .neon {
+      font-size: 20px;
+      color: gold;
+      text-shadow: 0 0 5px #fff, 0 0 10px #ff0, 0 0 20px #ff0, 0 0 40px #ff0;
+      animation: flicker 1s infinite alternate;
+    }
+    @keyframes flicker {
+      from { opacity: 1; }
+      to { opacity: 0.6; }
+    }
+  </style>
 </head>
 <body>
 
 <div id="menu">
-    <h1>🧽 CLEANMANT</h1>
-    <p style="font-size: 10px; line-height: 1.6;">Limpia el PC.<br>¡Cuidado con las BURBUJAS!<br>Mantén presionado para LÁSER.</p>
-    <button onclick="startGame()">JUGAR</button>
+  <h1>🧽 CLEANMANT</h1>
+  <p style="font-size: 10px; line-height: 1.6;">Limpia el PC.<br>¡Cuidado con las BURBUJAS!<br>Mantén presionado para LÁSER.</p>
+  <button onclick="startGame()">JUGAR</button>
 </div>
 
 <div id="hud" class="hud">
-    <span>NIVEL: <span id="lvl">1</span></span>
-    <span>VIDAS: <span id="vds">❤️❤️❤️</span></span>
+  <span>NIVEL: <span id="lvl">1</span></span>
+  <span>VIDAS: <span id="vds">❤️❤️❤️</span></span>
 </div>
 
 <canvas id="game" width="400" height="600"></canvas>
@@ -92,20 +113,20 @@ let viruses = [];
 let bubbles = [];
 
 function moveSponge(e) {
-    e.preventDefault();
-    let clientX, clientY;
-    if (e.touches) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
-    } else {
-        clientX = e.clientX;
-        clientY = e.clientY;
-    }
-    let rect = canvas.getBoundingClientRect();
-    let scaleX = canvas.width / rect.width;
-    let scaleY = canvas.height / rect.height;
-    sponge.x = (clientX - rect.left) * scaleX - 25;
-    sponge.y = (clientY - rect.top) * scaleY - (e.touches ? 80 : 25);
+  e.preventDefault();
+  let clientX, clientY;
+  if (e.touches) {
+    clientX = e.touches[0].clientX;
+    clientY = e.touches[0].clientY;
+  } else {
+    clientX = e.clientX;
+    clientY = e.clientY;
+  }
+  let rect = canvas.getBoundingClientRect();
+  let scaleX = canvas.width / rect.width;
+  let scaleY = canvas.height / rect.height;
+  sponge.x = (clientX - rect.left) * scaleX - 25;
+  sponge.y = (clientY - rect.top) * scaleY - (e.touches ? 80 : 25);
 }
 
 canvas.addEventListener("mousemove", moveSponge);
@@ -116,93 +137,88 @@ canvas.addEventListener("touchstart", (e) => { isFiring = true; moveSponge(e); }
 canvas.addEventListener("touchend", () => isFiring = false);
 
 function drawVirus(v) {
-    ctx.save();
-    ctx.translate(v.x, v.y);
-    ctx.fillStyle = "#ff1111";
-    ctx.beginPath(); ctx.arc(0, 0, v.r, 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle = "#ff1111";
-    ctx.lineWidth = 3;
-    for(let i=0; i<8; i++) {
-        let ang = (i/8) * Math.PI*2 + (Date.now()/500);
-        ctx.beginPath(); ctx.moveTo(0,0);
-        ctx.lineTo(Math.cos(ang)*22, Math.sin(ang)*22); ctx.stroke();
-    }
-    ctx.fillStyle = "white";
-    ctx.fillRect(-6, -5, 4, 4); ctx.fillRect(2, -5, 4, 4);
-    ctx.restore();
+  ctx.save();
+  ctx.translate(v.x, v.y);
+  ctx.fillStyle = "#ff1111";
+  ctx.beginPath(); ctx.arc(0, 0, v.r, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = "#ff1111";
+  ctx.lineWidth = 3;
+  for(let i=0; i<8; i++) {
+    let ang = (i/8) * Math.PI*2 + (Date.now()/500);
+    ctx.beginPath(); ctx.moveTo(0,0);
+    ctx.lineTo(Math.cos(ang)*22, Math.sin(ang)*22); ctx.stroke();
+  }
+  ctx.fillStyle = "white";
+  ctx.fillRect(-6, -5, 4, 4); ctx.fillRect(2, -5, 4, 4);
+  ctx.restore();
 
-    if(Math.random() < 0.02 + level*0.005) {
-        bubbles.push({ x: v.x, y: v.y, r: 8, vy: 3 + level });
-    }
+  if(Math.random() < 0.02 + level*0.005) {
+    bubbles.push({ x: v.x, y: v.y, r: 8, vy: 3 + level });
+  }
 }
 
 function drawBubbles() {
-    ctx.strokeStyle = "rgba(0, 255, 255, 0.8)";
-    ctx.lineWidth = 2;
-    bubbles.forEach((b, index) => {
-        b.y += b.vy;
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
-        ctx.stroke();
-        ctx.fillStyle = "rgba(0, 255, 255, 0.2)";
-        ctx.fill();
+  ctx.strokeStyle = "rgba(0, 255, 255, 0.8)";
+  ctx.lineWidth = 2;
+  bubbles.forEach((b, index) => {
+    b.y += b.vy;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(0, 255, 255, 0.2)";
+    ctx.fill();
 
-        let dist = Math.hypot((sponge.x+25) - b.x, (sponge.y+17) - b.y);
-        if(dist < 30 && shockTimer <= 0) {
-            bubbles.splice(index, 1);
-            takeDamage();
-        }
-        if(b.y > 600) bubbles.splice(index, 1);
-    });
+    let dist = Math.hypot((sponge.x+25) - b.x, (sponge.y+17) - b.y);
+    if(dist < 30 && shockTimer <= 0) {
+      bubbles.splice(index, 1);
+      takeDamage();
+    }
+    if(b.y > 600) bubbles.splice(index, 1);
+  });
 }
 
 function takeDamage() {
-    lives--;
-    shockTimer = 40;
-    canvas.classList.add("shock");
-    document.getElementById("vds").innerText = "❤️".repeat(lives);
-    if(lives <= 0) {
-        alert("GAME OVER - Virus detectado");
-        location.reload();
-    }
+  lives--;
+  shockTimer = 40;
+  canvas.classList.add("shock");
+  document.getElementById("vds").innerText = "❤️".repeat(lives);
+  if(lives <= 0) {
+    alert("GAME OVER - Virus detectado");
+    location.reload();
+  }
 }
 
-function drawTower() {
-    ctx.fillStyle = "#333"; ctx.fillRect(100, 100, 200, 350);
-}
-function drawComputer() {
-    ctx.fillStyle = "#1a1a1a"; ctx.fillRect(60, 150, 280, 180);
-}
-function drawMouse() {
-    ctx.fillStyle = "#444"; ctx.beginPath(); ctx.ellipse(200, 250, 55, 85, 0, 0, Math.PI*2); ctx.fill();
-}
+function drawTower() { ctx.fillStyle = "#333"; ctx.fillRect(100, 100, 200, 350); }
+function drawComputer() { ctx.fillStyle = "#1a1a1a"; ctx.fillRect(60, 150, 280, 180); }
+function drawMouse() { ctx.fillStyle = "#444"; ctx.beginPath(); ctx.ellipse(200, 250, 55, 85, 0, 0, Math.PI*2); ctx.fill(); }
 
 function drawSponge() {
-    ctx.fillStyle = (shockTimer > 0 && shockTimer % 2 === 0) ? "white" : "#ffd700";
-    ctx.beginPath();
-    ctx.roundRect(sponge.x, sponge.y, 50, 35, 8);
-    ctx.fill();
+  ctx.fillStyle = (shockTimer > 0 && shockTimer % 2 === 0) ? "white" : "#ffd700";
+  ctx.beginPath();
+  ctx.roundRect(sponge.x, sponge.y, 50, 35, 8);
+  ctx.fill();
 }
 
 function drawLaser() {
-    if (isFiring && shockTimer <= 0) {
-        ctx.shadowBlur = 15; ctx.shadowColor = "cyan";
-        ctx.strokeStyle = "white"; ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.moveTo(sponge.x + 25, sponge.y);
-        ctx.lineTo(sponge.x + 25, 0); ctx.stroke();
-        ctx.shadowBlur = 0;
-        dust = dust.filter(d => !(Math.abs(d.x - (sponge.x + 25)) < 18 && d.y < sponge.y));
-    }
+  if (isFiring && shockTimer <= 0) {
+    ctx.shadowBlur = 15; ctx.shadowColor = "cyan";
+    ctx.strokeStyle = "white"; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(sponge.x + 25, sponge.y);
+    ctx.lineTo(sponge.x + 25, 0); ctx.stroke();
+    ctx.shadowBlur = 0;
+    dust = dust.filter(d => !(Math.abs(d.x - (sponge.x + 25)) < 18 && d.y < sponge.y));
+  }
 }
 
 function createLevel() {
-    dust = [];
-    bubbles = [];
-    for(let i=0; i<30 + (level*8); i++) {
-        dust.push({ x: Math.random()*300+50, y: Math.random()*300+100, r: 5 });
-    }
-    viruses = [];
-    for(let i=0; i<level+1; i++) {
-        viruses.push({
-            x: Math.random()*350, y: Math.random()*200,
-            vx:
+  dust = [];
+  bubbles = [];
+  for(let i=0; i<30 + (level*8); i++) {
+    dust.push({ x: Math.random()*300+50, y: Math.random()*300+100, r: 5 });
+  }
+  viruses = [];
+  for(let i=0; i<level+1; i++) {
+    viruses.push({
+      x: Math.random()*350, y: Math.random()*200,
+      vx: (Math.random()-0.5)*(3+level),
+      vy:
