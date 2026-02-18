@@ -264,7 +264,7 @@ function update() {
     if(dust.length === 0) {
         level++;
         if(level > 3) {
-            // 🎉 Juego terminado con moneda
+            // 🎉 Juego terminado con trofeo
             gameRunning = false;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -273,25 +273,24 @@ function update() {
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             // Texto de felicitación
-            ctx.fillStyle = "cyan";
+            ctx.fillStyle = "gold";
             ctx.font = "18px 'Press Start 2P'";
             ctx.textAlign = "center";
-            ctx.fillText("🎉 FELICIDADES 🎉", canvas.width/2, canvas.height/2 - 40);
-            ctx.fillText("🪙 La PC fue limpiada correctamente 🪙", canvas.width/2, canvas.height/2);
+            ctx.fillText("🏆 La limpieza fue exitosa 🏆", canvas.width/2, canvas.height/2 - 40);
 
-            // Animación de moneda rebotando
-            let coinY = -50;
+            // Animación de trofeo rebotando
+            let trophyY = -50;
             let direction = 1;
-            function drawCoin() {
-                ctx.clearRect(0, canvas.height/2 + 10, canvas.width, 100);
-                ctx.font = "40px 'Press Start 2P'";
-                ctx.fillText("🪙", canvas.width/2, coinY);
-                coinY += 5 * direction;
-                if(coinY > canvas.height/2 + 50) direction = -0.8; // rebote
-                if(coinY < canvas.height/2 - 20) direction = 1; // sube de nuevo
-                requestAnimationFrame(drawCoin);
+            function drawTrophy() {
+                ctx.clearRect(0, canvas.height/2 - 10, canvas.width, 100);
+                ctx.font = "50px 'Press Start 2P'";
+                ctx.fillText("🏆", canvas.width/2, trophyY);
+                trophyY += 6 * direction;
+                if(trophyY > canvas.height/2 + 40) direction = -0.7;
+                if(trophyY < canvas.height/2 - 20) direction = 1;
+                requestAnimationFrame(drawTrophy);
             }
-            drawCoin();
+            drawTrophy();
         } else {
             document.getElementById("lvl").innerText = level;
             createLevel();
