@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CLEANMANT MOBILE - Virus Attack</title>
+    <title>CLEANMANT MOBILE - Hardware Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
-            background: radial-gradient(circle, #050a0c, #000);
+            background: #050a0c;
             color: white;
             text-align: center;
             font-family: 'Press Start 2P', cursive;
@@ -17,7 +17,7 @@
         }
         canvas {
             display: none;
-            background: #0a0a0a;
+            background: #111;
             border: 4px solid #00ffff;
             box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
             margin: 10px auto;
@@ -53,12 +53,12 @@
 
 <div id="menu">
     <h1>🧽 CLEANMANT</h1>
-    <p style="font-size: 10px; line-height: 1.6;">Limpia el PC.<br>¡Cuidado con las BURBUJAS!<br>Mantén presionado para LÁSER.</p>
-    <button onclick="startGame()">JUGAR</button>
+    <p style="font-size: 10px; line-height: 1.6;">Limpia el Hardware.<br>¡Dificultad Progresiva!<br>Láser: Mantén presionado.</p>
+    <button onclick="startGame()">INICIAR LIMPIEZA</button>
 </div>
 
 <div id="hud" class="hud">
-    <span>NIVEL: <span id="lvl">1</span></span>
+    <span>LVL: <span id="lvl">1</span></span>
     <span>LIMPIEZA: <span id="pct">0%</span></span>
     <span>VIDAS: <span id="vds">❤️❤️❤️</span></span>
 </div>
@@ -81,21 +81,93 @@ let dust = [];
 let viruses = [];
 let bubbles = [];
 
+// --- DIBUJO DE HARDWARE MEJORADO ---
+
+function drawTower() {
+    // Carcasa principal
+    let g = ctx.createLinearGradient(100, 50, 300, 50);
+    g.addColorStop(0, "#222"); g.addColorStop(0.5, "#444"); g.addColorStop(1, "#222");
+    ctx.fillStyle = g;
+    ctx.fillRect(100, 50, 200, 450);
+    
+    // Lector de CD
+    ctx.fillStyle = "#111";
+    ctx.fillRect(110, 80, 180, 40);
+    ctx.strokeStyle = "#333";
+    ctx.strokeRect(110, 80, 180, 40);
+    ctx.fillStyle = "cyan"; ctx.fillRect(260, 105, 10, 5); // Botón expulsar
+
+    // Ventiladores (rejillas)
+    ctx.fillStyle = "#000";
+    for(let i=0; i<5; i++) {
+        ctx.fillRect(120, 350 + (i*15), 160, 5);
+    }
+
+    // Botón de encendido con brillo
+    let pGrd = ctx.createRadialGradient(200, 250, 2, 200, 250, 25);
+    pGrd.addColorStop(0, "cyan"); pGrd.addColorStop(1, "transparent");
+    ctx.fillStyle = pGrd;
+    ctx.beginPath(); ctx.arc(200, 250, 25, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = "white"; ctx.stroke();
+}
+
+function drawMonitor() {
+    // Marco
+    ctx.fillStyle = "#333";
+    ctx.beginPath(); ctx.roundRect(50, 100, 300, 220, 15); ctx.fill();
+    
+    // Pantalla
+    let sGrd = ctx.createLinearGradient(70, 120, 330, 300);
+    sGrd.addColorStop(0, "#001"); sGrd.addColorStop(1, "#004");
+    ctx.fillStyle = sGrd;
+    ctx.fillRect(70, 120, 260, 160);
+
+    // Reflejo en la pantalla
+    ctx.fillStyle = "rgba(255,255,255,0.05)";
+    ctx.beginPath(); ctx.moveTo(70, 120); ctx.lineTo(330, 120); ctx.lineTo(70, 280); ctx.fill();
+
+    // Soporte/Peana
+    ctx.fillStyle = "#222";
+    ctx.fillRect(160, 320, 80, 40);
+    ctx.fillRect(120, 360, 160, 20);
+}
+
+function drawMouse() {
+    // Cable
+    ctx.strokeStyle = "#222"; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(200, 0); ctx.quadraticCurveTo(220, 100, 200, 150); ctx.stroke();
+
+    // Cuerpo del ratón
+    let mGrd = ctx.createRadialGradient(200, 300, 20, 200, 300, 150);
+    mGrd.addColorStop(0, "#444"); mGrd.addColorStop(1, "#111");
+    ctx.fillStyle = mGrd;
+    ctx.beginPath();
+    ctx.ellipse(200, 320, 70, 100, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = "#555"; ctx.stroke();
+
+    // Botones y Rueda
+    ctx.fillStyle = "#222";
+    ctx.beginPath(); ctx.moveTo(135, 280); ctx.lineTo(265, 280); ctx.stroke(); // Línea divisoria
+    ctx.fillStyle = "cyan";
+    ctx.beginPath(); ctx.roundRect(192, 230, 16, 35, 5); ctx.fill(); // Rueda LED
+}
+
+// --- LÓGICA DE JUEGO ---
+
 function moveSponge(e) {
     e.preventDefault();
     let clientX, clientY;
     if (e.touches && e.touches.length > 0) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
+        clientX = e.touches[0].clientX; clientY = e.touches[0].clientY;
     } else {
-        clientX = e.clientX;
-        clientY = e.clientY;
+        clientX = e.clientX; clientY = e.clientY;
     }
     let rect = canvas.getBoundingClientRect();
     let scaleX = canvas.width / rect.width;
     let scaleY = canvas.height / rect.height;
     sponge.x = (clientX - rect.left) * scaleX - 25;
-    sponge.y = (clientY - rect.top) * scaleY - (e.touches ? 80 : 25);
+    sponge.y = (clientY - rect.top) * scaleY - (e.touches ? 100 : 25);
 }
 
 canvas.addEventListener("mousemove", moveSponge);
@@ -110,42 +182,34 @@ function drawVirus(v) {
     ctx.translate(v.x, v.y);
     ctx.fillStyle = "#ff1111";
     ctx.beginPath(); ctx.arc(0, 0, v.r, 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle = "#ff1111";
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#ff1111"; ctx.lineWidth = 3;
     for(let i=0; i<8; i++) {
-        let ang = (i/8) * Math.PI*2 + (Date.now()/500);
+        let ang = (i/8) * Math.PI*2 + (Date.now()/400);
         ctx.beginPath(); ctx.moveTo(0,0);
-        ctx.lineTo(Math.cos(ang)*22, Math.sin(ang)*22); ctx.stroke();
+        ctx.lineTo(Math.cos(ang)*24, Math.sin(ang)*24); ctx.stroke();
     }
     ctx.fillStyle = "white";
     ctx.fillRect(-6, -5, 4, 4); ctx.fillRect(2, -5, 4, 4);
     ctx.restore();
 
-    // DIFICULTAD: Probabilidad de burbuja aumenta con el nivel
-    if(Math.random() < 0.005 + (level * 0.008)) {
-        bubbles.push({ x: v.x, y: v.y, r: 8, vy: 3 + level });
+    if(Math.random() < 0.005 + (level * 0.01)) {
+        bubbles.push({ x: v.x, y: v.y, r: 8, vy: 3 + (level * 1.5) });
     }
 }
 
 function drawBubbles() {
-    ctx.strokeStyle = "rgba(0, 255, 255, 0.8)";
-    ctx.lineWidth = 2;
     for (let i = bubbles.length - 1; i >= 0; i--) {
         let b = bubbles[i];
         b.y += b.vy;
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
-        ctx.stroke();
-        ctx.fillStyle = "rgba(0, 255, 255, 0.2)";
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+        ctx.strokeStyle = "cyan"; ctx.stroke();
+        ctx.fillStyle = "rgba(0, 255, 255, 0.2)"; ctx.fill();
 
         let dist = Math.hypot((sponge.x+25) - b.x, (sponge.y+17) - b.y);
         if(dist < 30 && shockTimer <= 0) {
             bubbles.splice(i, 1);
             takeDamage();
-        } else if(b.y > 600) {
-            bubbles.splice(i, 1);
-        }
+        } else if(b.y > 600) bubbles.splice(i, 1);
     }
 }
 
@@ -154,69 +218,48 @@ function takeDamage() {
     shockTimer = 40;
     canvas.classList.add("shock");
     document.getElementById("vds").innerText = "❤️".repeat(lives);
-    if(lives <= 0) {
-        gameOver();
-    }
+    if(lives <= 0) endGame("GAME OVER", "red");
 }
 
-function gameOver() {
+function endGame(msg, color) {
     gameRunning = false;
-    ctx.fillStyle = "rgba(0,0,0,0.8)";
+    ctx.fillStyle = "rgba(0,0,0,0.85)";
     ctx.fillRect(0,0,400,600);
-    ctx.fillStyle = "red";
+    ctx.fillStyle = color;
     ctx.font = "20px 'Press Start 2P'";
-    ctx.fillText("GAME OVER", 100, 300);
-    ctx.fillStyle = "white";
-    ctx.font = "10px 'Press Start 2P'";
-    ctx.fillText("Virus Detectado", 115, 340);
-    setTimeout(() => location.reload(), 3000);
-}
-
-function winGame() {
-    gameRunning = false;
-    ctx.fillStyle = "rgba(0,0,0,0.8)";
-    ctx.fillRect(0,0,400,600);
-    ctx.fillStyle = "cyan";
-    ctx.font = "18px 'Press Start 2P'";
-    ctx.fillText("LIMPIEZA 100%", 70, 280);
-    ctx.fillStyle = "white";
-    ctx.font = "10px 'Press Start 2P'";
-    ctx.fillText("¡PC DESINFECTADA!", 100, 320);
+    ctx.textAlign = "center";
+    ctx.fillText(msg, 200, 300);
+    if(msg === "LIMPIEZA 100%") {
+        ctx.fillStyle = "white";
+        ctx.font = "10px 'Press Start 2P'";
+        ctx.fillText("¡HARDWARE IMPECABLE!", 200, 340);
+    }
     setTimeout(() => location.reload(), 4000);
-}
-
-function drawSponge() {
-    ctx.fillStyle = (shockTimer > 0 && shockTimer % 2 === 0) ? "white" : "#ffd700";
-    ctx.beginPath();
-    ctx.roundRect(sponge.x, sponge.y, 50, 35, 8);
-    ctx.fill();
 }
 
 function drawLaser() {
     if (isFiring && shockTimer <= 0) {
-        ctx.shadowBlur = 15; ctx.shadowColor = "cyan";
-        ctx.strokeStyle = "white"; ctx.lineWidth = 4;
+        ctx.shadowBlur = 20; ctx.shadowColor = "cyan";
+        ctx.strokeStyle = "white"; ctx.lineWidth = 6;
         ctx.beginPath(); ctx.moveTo(sponge.x + 25, sponge.y);
         ctx.lineTo(sponge.x + 25, 0); ctx.stroke();
         ctx.shadowBlur = 0;
-        dust = dust.filter(d => !(Math.abs(d.x - (sponge.x + 25)) < 18 && d.y < sponge.y));
+        dust = dust.filter(d => !(Math.abs(d.x - (sponge.x + 25)) < 20 && d.y < sponge.y));
     }
 }
 
 function createLevel() {
-    dust = [];
-    bubbles = [];
-    totalDustInLevel = 25 + (level * 10);
+    dust = []; bubbles = [];
+    totalDustInLevel = 30 + (level * 15);
     for(let i=0; i < totalDustInLevel; i++) {
-        dust.push({ x: Math.random()*300+50, y: Math.random()*300+100, r: 5 });
+        dust.push({ x: 50 + Math.random()*300, y: 100 + Math.random()*350, r: 6 });
     }
     viruses = [];
     for(let i=0; i < level + 1; i++) {
-        // DIFICULTAD: Los virus se mueven más rápido en niveles altos
-        let speed = 2 + level;
+        let speed = 2.5 + level;
         viruses.push({
             x: Math.random()*350, y: Math.random()*200,
-            vx: (Math.random()-0.5) * speed, vy: (Math.random()-0.5) * speed, r: 12
+            vx: (Math.random()-0.5) * speed, vy: (Math.random()-0.5) * speed, r: 13
         });
     }
 }
@@ -235,15 +278,13 @@ function update() {
     if(!gameRunning) return;
     ctx.clearRect(0, 0, 400, 600);
 
-    // Fondos decorativos según nivel
-    ctx.globalAlpha = 0.3;
-    if(level === 1) { ctx.fillStyle = "gray"; ctx.fillRect(100, 100, 200, 350); }
-    else if(level === 2) { ctx.fillStyle = "blue"; ctx.fillRect(70, 160, 260, 150); }
-    else { ctx.fillStyle = "green"; ctx.beginPath(); ctx.ellipse(200, 250, 55, 85, 0, 0, Math.PI*2); ctx.fill(); }
-    ctx.globalAlpha = 1.0;
+    // Dibujar fondo según nivel
+    if(level === 1) drawTower();
+    else if(level === 2) drawMonitor();
+    else drawMouse();
 
-    // Polvo
-    ctx.fillStyle = "#8b4513";
+    // Dibujar Suciedad
+    ctx.fillStyle = "#5c4033";
     dust.forEach(d => {
         ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI*2); ctx.fill();
     });
@@ -251,35 +292,33 @@ function update() {
     // Virus
     viruses.forEach(v => {
         v.x += v.vx; v.y += v.vy;
-        if(v.x < 0 || v.x > 400) v.vx *= -1;
-        if(v.y < 0 || v.y > 600) v.vy *= -1;
+        if(v.x < 10 || v.x > 390) v.vx *= -1;
+        if(v.y < 10 || v.y > 590) v.vy *= -1;
         drawVirus(v);
         let dist = Math.hypot((sponge.x+25) - v.x, (sponge.y+17) - v.y);
         if(dist < 32 && shockTimer <= 0) takeDamage();
     });
 
     drawBubbles();
-
     if(shockTimer > 0) {
         shockTimer--;
         if(shockTimer === 0) canvas.classList.remove("shock");
     }
 
-    // Colisión esponja -> polvo
-    dust = dust.filter(d => Math.hypot((sponge.x+25)-d.x, (sponge.y+17)-d.y) > 35);
-
-    // HUD de limpieza
+    dust = dust.filter(d => Math.hypot((sponge.x+25)-d.x, (sponge.y+17)-d.y) > 38);
     let progress = Math.floor(((totalDustInLevel - dust.length) / totalDustInLevel) * 100);
     document.getElementById("pct").innerText = progress + "%";
 
     drawLaser();
-    drawSponge();
+    // Dibujar Esponja
+    ctx.fillStyle = (shockTimer > 0 && shockTimer % 2 === 0) ? "white" : "#ffd700";
+    ctx.beginPath(); ctx.roundRect(sponge.x, sponge.y, 50, 35, 8); ctx.fill();
+    ctx.strokeStyle = "#daa520"; ctx.stroke();
 
     if(dust.length === 0) {
         level++;
-        if(level > 3) {
-            winGame();
-        } else {
+        if(level > 3) endGame("LIMPIEZA 100%", "cyan");
+        else {
             document.getElementById("lvl").innerText = level;
             createLevel();
         }
