@@ -1,66 +1,41 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CLEANMANT MOBILE - Virus Attack</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <style>
-        body {
-            margin: 0;
-            background: radial-gradient(circle, #050a0c, #000);
-            color: white;
-            text-align: center;
-            font-family: 'Press Start 2P', cursive;
-            overflow: hidden;
-            touch-action: none;
-        }
-        canvas {
-            display: none;
-            background: #0a0a0a;
-            border: 4px solid #00ffff;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
-            margin: 10px auto;
-            max-width: 95vw;
-            max-height: 80vh;
-        }
-        #menu { margin-top: 80px; padding: 20px; }
-        button {
-            padding: 20px 40px;
-            font-family: 'Press Start 2P', cursive;
-            background: cyan;
-            border: none;
-            box-shadow: 0 5px 0 #008b8b;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-        .hud {
-            color: cyan;
-            font-size: 10px;
-            margin: 10px;
-            display: none;
-            display: flex;
-            justify-content: space-around;
-        }
-        .shock { animation: shake 0.1s infinite; }
-        @keyframes shake {
-            0% { transform: translate(3px, 3px); }
-            50% { transform: translate(-3px, -3px); }
-            100% { transform: translate(0, 0); }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLEANMANT ULTIMATE</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+body{
+margin:0;
+background:black;
+color:white;
+text-align:center;
+font-family:'Press Start 2P', cursive;
+overflow:hidden;
+}
+canvas{
+background:black;
+display:block;
+margin:auto;
+image-rendering:pixelated;
+border:4px solid cyan;
+}
+button{
+margin-top:40px;
+padding:20px;
+font-family:'Press Start 2P';
+background:cyan;
+border:none;
+cursor:pointer;
+}
+</style>
 </head>
 <body>
 
 <div id="menu">
-    <h1>🧽 CLEANMANT</h1>
-    <p style="font-size: 10px; line-height: 1.6;">Limpia el PC.<br>¡Cuidado con las BURBUJAS!<br>Mantén presionado para LÁSER.</p>
-    <button onclick="startGame()">JUGAR</button>
-</div>
-
-<div id="hud" class="hud">
-    <span>NIVEL: <span id="lvl">1</span></span>
-    <span>VIDAS: <span id="vds">❤️❤️❤️</span></span>
+<h1>CLEANMANT ULTIMATE</h1>
+<button onclick="startGame()">JUGAR</button>
 </div>
 
 <canvas id="game" width="400" height="600"></canvas>
@@ -68,235 +43,159 @@
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
+ctx.imageSmoothingEnabled = false;
 
-let level = 1;
-let lives = 3;
-let gameRunning = false;
-let isFiring = false;
-let shockTimer = 0;
+let level=1;
+let lives=3;
+let dust=[];
+let totalDust=0;
+let isFiring=false;
+let heat=0;
+let boss=null;
+let gameRunning=false;
 
-let sponge = { x: 175, y: 500, size: 50 };
-let dust = [];
-let viruses = [];
-let bubbles = [];
+let sponge={x:180,y:520};
 
-function moveSponge(e) {
-    e.preventDefault();
-    let clientX, clientY;
-    if (e.touches) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
-    } else {
-        clientX = e.clientX;
-        clientY = e.clientY;
-    }
-    let rect = canvas.getBoundingClientRect();
-    let scaleX = canvas.width / rect.width;
-    let scaleY = canvas.height / rect.height;
-    sponge.x = (clientX - rect.left) * scaleX - 25;
-    sponge.y = (clientY - rect.top) * scaleY - (e.touches ? 80 : 25);
+canvas.addEventListener("mousemove",e=>{
+let rect=canvas.getBoundingClientRect();
+sponge.x=(e.clientX-rect.left)-20;
+});
+canvas.addEventListener("mousedown",()=>isFiring=true);
+canvas.addEventListener("mouseup",()=>isFiring=false);
+
+function startGame(){
+document.getElementById("menu").style.display="none";
+canvas.style.display="block";
+gameRunning=true;
+createLevel();
+update();
 }
 
-canvas.addEventListener("mousemove", moveSponge);
-canvas.addEventListener("touchmove", moveSponge);
-canvas.addEventListener("mousedown", () => isFiring = true);
-canvas.addEventListener("mouseup", () => isFiring = false);
-canvas.addEventListener("touchstart", (e) => { isFiring = true; moveSponge(e); });
-canvas.addEventListener("touchend", () => isFiring = false);
+function createLevel(){
+dust=[];
+for(let i=0;i<30+level*10;i++){
+dust.push({x:Math.random()*380,y:Math.random()*400});
+}
+totalDust=dust.length;
 
-function drawVirus(v) {
-    ctx.save();
-    ctx.translate(v.x, v.y);
-    ctx.fillStyle = "#ff1111";
-    ctx.beginPath(); ctx.arc(0, 0, v.r, 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle = "#ff1111";
-    ctx.lineWidth = 3;
-    for(let i=0; i<8; i++) {
-        let ang = (i/8) * Math.PI*2 + (Date.now()/500);
-        ctx.beginPath(); ctx.moveTo(0,0);
-        ctx.lineTo(Math.cos(ang)*22, Math.sin(ang)*22); ctx.stroke();
-    }
-    ctx.fillStyle = "white";
-    ctx.fillRect(-6, -5, 4, 4); ctx.fillRect(2, -5, 4, 4);
-    ctx.restore();
-
-    if(Math.random() < 0.01) {
-        bubbles.push({ x: v.x, y: v.y, r: 8, vy: 3 + level });
-    }
+if(level==5){
+boss={x:150,y:80,life:100};
+}
 }
 
-function drawBubbles() {
-    ctx.strokeStyle = "rgba(0, 255, 255, 0.8)";
-    ctx.lineWidth = 2;
-    bubbles.forEach((b, index) => {
-        b.y += b.vy;
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
-        ctx.stroke();
-        ctx.fillStyle = "rgba(0, 255, 255, 0.2)";
-        ctx.fill();
-
-        let dist = Math.hypot((sponge.x+25) - b.x, (sponge.y+17) - b.y);
-        if(dist < 30 && shockTimer <= 0) {
-            bubbles.splice(index, 1);
-            takeDamage();
-        }
-        if(b.y > 600) bubbles.splice(index, 1);
-    });
+function drawBackground(){
+ctx.fillStyle="#220000";
+ctx.fillRect(0,0,400,600);
+ctx.fillStyle="#660000";
+for(let i=0;i<40;i++){
+ctx.fillRect((i*40+Date.now()/20)%400,(i*30)%600,4,4);
+}
 }
 
-function takeDamage() {
-    lives--;
-    shockTimer = 40;
-    canvas.classList.add("shock");
-    document.getElementById("vds").innerText = "❤️".repeat(lives);
-    if(lives <= 0) {
-        alert("GAME OVER - Virus detectado");
-        location.reload();
-    }
+function drawProgress(){
+let progress=Math.floor((1-(dust.length/totalDust))*100);
+ctx.fillStyle="white";
+ctx.fillText("LVL "+level+"/5",10,20);
+ctx.fillText("VIDAS:"+lives,250,20);
+ctx.fillStyle="gray";
+ctx.fillRect(100,30,200,10);
+ctx.fillStyle="lime";
+ctx.fillRect(100,30,2*progress,10);
 }
 
-function drawTower() {
-    let g = ctx.createLinearGradient(100, 100, 300, 100);
-    g.addColorStop(0, "#111"); g.addColorStop(0.5, "#333"); g.addColorStop(1, "#111");
-    ctx.fillStyle = g; ctx.fillRect(100, 100, 200, 350);
-    for(let i=0; i<3; i++) {
-        let y = 160 + (i * 90);
-        let rad = ctx.createRadialGradient(200, y, 2, 200, y, 30);
-        rad.addColorStop(0, "cyan"); rad.addColorStop(1, "transparent");
-        ctx.fillStyle = rad;
-        ctx.beginPath(); ctx.arc(200, y, 30, 0, Math.PI*2); ctx.fill();
-    }
+function drawDust(){
+ctx.fillStyle="#8b4513";
+dust.forEach(d=>ctx.fillRect(d.x,d.y,4,4));
 }
 
-function drawComputer() {
-    ctx.fillStyle = "#1a1a1a"; ctx.fillRect(60, 150, 280, 180);
-    let screen = ctx.createLinearGradient(70, 160, 70, 320);
-    screen.addColorStop(0, "#001"); screen.addColorStop(1, "#003");
-    ctx.fillStyle = screen; ctx.fillRect(70, 160, 260, 150);
+function drawSponge(){
+ctx.fillStyle="yellow";
+ctx.fillRect(sponge.x,sponge.y,40,30);
 }
 
-function drawMouse() {
-    let mGrd = ctx.createRadialGradient(200, 250, 20, 200, 250, 80);
-    mGrd.addColorStop(0, "#444"); mGrd.addColorStop(1, "#050505");
-    ctx.fillStyle = mGrd;
-    ctx.beginPath(); ctx.ellipse(200, 250, 55, 85, 0, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = "cyan"; ctx.fillRect(196, 200, 8, 25);
+function drawLaser(){
+if(isFiring && heat<100){
+heat+=1;
+ctx.fillStyle="cyan";
+let y=sponge.y;
+while(y>0){
+ctx.fillRect(sponge.x+18+Math.random()*4-2,y,4,8);
+y-=10;
+}
+dust=dust.filter(d=>!(Math.abs(d.x-(sponge.x+20))<20 && d.y<sponge.y));
+
+if(level==5 && boss){
+boss.life-=0.2;
+}
+}else{
+heat-=2;
+}
+heat=Math.max(0,Math.min(100,heat));
+
+if(heat>=100){
+ctx.fillStyle="orange";
+ctx.fillText("SOBRECALENTAMIENTO!",20,580);
+isFiring=false;
+}
 }
 
-function drawSponge() {
-    ctx.fillStyle = (shockTimer > 0 && shockTimer % 2 === 0) ? "white" : "#ffd700";
-    ctx.beginPath();
-    ctx.roundRect(sponge.x, sponge.y, 50, 35, 8);
-    ctx.fill();
+function drawBoss(){
+if(!boss) return;
+ctx.fillStyle="red";
+ctx.fillRect(boss.x,boss.y,100,60);
+ctx.fillStyle="white";
+ctx.fillRect(boss.x+20,boss.y+20,10,10);
+ctx.fillRect(boss.x+60,boss.y+20,10,10);
+
+ctx.fillStyle="black";
+ctx.fillRect(boss.x+40,boss.y+40,20,10);
+
+ctx.fillStyle="red";
+ctx.fillRect(100,50,200,10);
+ctx.fillStyle="lime";
+ctx.fillRect(100,50,2*boss.life,10);
+
+if(boss.life<=0){
+victory();
+}
 }
 
-function drawLaser() {
-    if (isFiring && shockTimer <= 0) {
-        ctx.shadowBlur = 15; ctx.shadowColor = "cyan";
-        ctx.strokeStyle = "white"; ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.moveTo(sponge.x + 25, sponge.y);
-        ctx.lineTo(sponge.x + 25, 0); ctx.stroke();
-        ctx.shadowBlur = 0;
-        dust = dust.filter(d => !(Math.abs(d.x - (sponge.x + 25)) < 18 && d.y < sponge.y));
-    }
+function victory(){
+gameRunning=false;
+ctx.fillStyle="black";
+ctx.fillRect(0,0,400,600);
+
+ctx.fillStyle="gold";
+ctx.font="18px 'Press Start 2P'";
+ctx.fillText("🏆 LA LIMPIEZA",50,250);
+ctx.fillText("FUE EXITOSA",70,300);
+
+let y=-50;
+function animate(){
+ctx.clearRect(0,200,400,200);
+ctx.fillText("🏆",180,y);
+y+=5;
+if(y<260)requestAnimationFrame(animate);
+}
+animate();
 }
 
-function createLevel() {
-    dust = [];
-    bubbles = [];
-    for(let i=0; i<25 + (level*5); i++) {
-        dust.push({ x: Math.random()*300+50, y: Math.random()*300+100, r: 5 });
-    }
-    viruses = [];
-    for(let i=0; i<level; i++) {
-        viruses.push({
-            x: Math.random()*350, y: Math.random()*200,
-            vx: (Math.random()-0.5)*4, vy: (Math.random()-0.5)*4, r: 12
-        });
-    }
+function update(){
+if(!gameRunning)return;
+
+drawBackground();
+drawProgress();
+drawDust();
+drawSponge();
+drawLaser();
+drawBoss();
+
+if(dust.length==0 && level<5){
+level++;
+createLevel();
 }
 
-function startGame() {
-    document.getElementById("menu").style.display = "none";
-    document.getElementById("hud").style.display = "flex";
-    canvas.style.display = "block";
-    gameRunning = true;
-    level = 1; lives = 3;
-    createLevel();
-    update();
-}
-
-function update() {
-    if(!gameRunning) return;
-    ctx.clearRect(0, 0, 400, 600);
-
-    if(level === 1) drawTower();
-    else if(level === 2) drawComputer();
-    else drawMouse();
-
-    ctx.fillStyle = "#8b4513";
-    dust.forEach(d => {
-        ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI*2); ctx.fill();
-    });
-
-    viruses.forEach(v => {
-        v.x += v.vx; v.y += v.vy;
-        if(v.x < 0 || v.x > 400) v.vx *= -1;
-        if(v.y < 0 || v.y > 600) v.vy *= -1;
-        drawVirus(v);
-        let dist = Math.hypot((sponge.x+25) - v.x, (sponge.y+17) - v.y);
-        if(dist < 32 && shockTimer <= 0) takeDamage();
-    });
-
-    drawBubbles();
-
-    if(shockTimer > 0) {
-        shockTimer--;
-        if(shockTimer === 0) canvas.classList.remove("shock");
-    }
-
-    dust = dust.filter(d => Math.hypot((sponge.x+25)-d.x, (sponge.y+17)-d.y) > 35);
-
-    drawLaser();
-    drawSponge();
-
-    if(dust.length === 0) {
-        level++;
-        if(level > 3) {
-            // 🎉 Juego terminado con trofeo
-            gameRunning = false;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Fondo festivo
-            ctx.fillStyle = "#000";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Texto de felicitación
-            ctx.fillStyle = "gold";
-            ctx.font = "18px 'Press Start 2P'";
-            ctx.textAlign = "center";
-            ctx.fillText("🏆 La limpieza fue exitosa 🏆", canvas.width/2, canvas.height/2 - 40);
-
-            // Animación de trofeo rebotando
-            let trophyY = -50;
-            let direction = 1;
-            function drawTrophy() {
-                ctx.clearRect(0, canvas.height/2 - 10, canvas.width, 100);
-                ctx.font = "50px 'Press Start 2P'";
-                ctx.fillText("🏆", canvas.width/2, trophyY);
-                trophyY += 6 * direction;
-                if(trophyY > canvas.height/2 + 40) direction = -0.7;
-                if(trophyY < canvas.height/2 - 20) direction = 1;
-                requestAnimationFrame(drawTrophy);
-            }
-            drawTrophy();
-        } else {
-            document.getElementById("lvl").innerText = level;
-            createLevel();
-        }
-    }
-    requestAnimationFrame(update);
+requestAnimationFrame(update);
 }
 </script>
 </body>
