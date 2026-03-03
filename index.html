@@ -229,11 +229,21 @@ function endGame(msg, color) {
     ctx.font = "20px 'Press Start 2P'";
     ctx.textAlign = "center";
     ctx.fillText(msg, 200, 300);
+    
+    // Lógica de descuentos añadida aquí
+    ctx.fillStyle = "white";
+    ctx.font = "12px 'Press Start 2P'";
     if(msg === "LIMPIEZA 100%") {
-        ctx.fillStyle = "white";
-        ctx.font = "10px 'Press Start 2P'";
         ctx.fillText("¡HARDWARE IMPECABLE!", 200, 340);
+        ctx.fillStyle = "yellow";
+        ctx.fillText("BONO: 40% DESCUENTO", 200, 380);
+    } else if(lives > 0) {
+        let promo = level === 1 ? "10%" : "20%";
+        ctx.fillText("¡NIVEL COMPLETADO!", 200, 340);
+        ctx.fillStyle = "yellow";
+        ctx.fillText(GANASTE: ${promo} DESC., 200, 380);
     }
+
     setTimeout(() => location.reload(), 4000);
 }
 
@@ -316,11 +326,28 @@ function update() {
     ctx.strokeStyle = "#daa520"; ctx.stroke();
 
     if(dust.length === 0) {
-        level++;
-        if(level > 3) endGame("LIMPIEZA 100%", "cyan");
-        else {
-            document.getElementById("lvl").innerText = level;
-            createLevel();
+        if(level === 3) {
+            endGame("LIMPIEZA 100%", "cyan");
+        } else {
+            // Pausar un momento para mostrar el descuento antes de pasar al siguiente nivel
+            gameRunning = false;
+            let currentLevel = level;
+            let discount = currentLevel === 1 ? "10%" : "20%";
+            
+            ctx.fillStyle = "rgba(0,0,0,0.7)";
+            ctx.fillRect(0, 250, 400, 100);
+            ctx.fillStyle = "yellow";
+            ctx.font = "12px 'Press Start 2P'";
+            ctx.textAlign = "center";
+            ctx.fillText(¡LVL ${currentLevel} OK! GANASTE ${discount}, 200, 310);
+            
+            setTimeout(() => {
+                level++;
+                document.getElementById("lvl").innerText = level;
+                createLevel();
+                gameRunning = true;
+                update();
+            }, 2000);
         }
     }
     if(gameRunning) requestAnimationFrame(update);
