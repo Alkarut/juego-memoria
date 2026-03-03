@@ -13,7 +13,7 @@
             text-align: center;
             font-family: 'Press Start 2P', cursive;
             overflow: hidden;
-            touch-action: none; /* Evita zoom accidental */
+            touch-action: none;
         }
         canvas {
             display: none;
@@ -24,27 +24,15 @@
             max-width: 95vw;
             max-height: 80vh;
         }
-        #menu { 
-            margin-top: 80px; 
-            padding: 20px; 
-            display: block; /* Asegura que se vea al inicio */
-        }
+        #menu { margin-top: 80px; padding: 20px; }
         button {
-            padding: 25px 40px;
+            padding: 20px 40px;
             font-family: 'Press Start 2P', cursive;
-            background: #00ffff;
-            color: #000;
+            background: cyan;
             border: none;
             box-shadow: 0 5px 0 #008b8b;
             cursor: pointer;
             margin-top: 20px;
-            font-size: 14px;
-            border-radius: 5px;
-            -webkit-tap-highlight-color: transparent;
-        }
-        button:active {
-            transform: translateY(4px);
-            box-shadow: 0 1px 0 #008b8b;
         }
         .hud {
             color: cyan;
@@ -66,7 +54,7 @@
 <div id="menu">
     <h1>🧽 CLEANMANT</h1>
     <p style="font-size: 10px; line-height: 1.6;">Limpia el Hardware.<br>¡Dificultad Progresiva!<br>Láser: Mantén presionado.</p>
-    <button id="btnStart">INICIAR LIMPIEZA</button>
+    <button onclick="startGame()">INICIAR LIMPIEZA</button>
 </div>
 
 <div id="hud" class="hud">
@@ -80,9 +68,6 @@
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
-const menu = document.getElementById("menu");
-const hud = document.getElementById("hud");
-const btnStart = document.getElementById("btnStart");
 
 let level = 1;
 let lives = 3;
@@ -96,33 +81,81 @@ let dust = [];
 let viruses = [];
 let bubbles = [];
 
-// --- DIBUJO DE HARDWARE ---
+// --- DIBUJO DE HARDWARE MEJORADO ---
+
 function drawTower() {
+    // Carcasa principal
     let g = ctx.createLinearGradient(100, 50, 300, 50);
     g.addColorStop(0, "#222"); g.addColorStop(0.5, "#444"); g.addColorStop(1, "#222");
     ctx.fillStyle = g;
     ctx.fillRect(100, 50, 200, 450);
+    
+    // Lector de CD
     ctx.fillStyle = "#111";
     ctx.fillRect(110, 80, 180, 40);
     ctx.strokeStyle = "#333";
     ctx.strokeRect(110, 80, 180, 40);
+    ctx.fillStyle = "cyan"; ctx.fillRect(260, 105, 10, 5); // Botón expulsar
+
+    // Ventiladores (rejillas)
+    ctx.fillStyle = "#000";
+    for(let i=0; i<5; i++) {
+        ctx.fillRect(120, 350 + (i*15), 160, 5);
+    }
+
+    // Botón de encendido con brillo
+    let pGrd = ctx.createRadialGradient(200, 250, 2, 200, 250, 25);
+    pGrd.addColorStop(0, "cyan"); pGrd.addColorStop(1, "transparent");
+    ctx.fillStyle = pGrd;
+    ctx.beginPath(); ctx.arc(200, 250, 25, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = "white"; ctx.stroke();
 }
 
 function drawMonitor() {
+    // Marco
     ctx.fillStyle = "#333";
     ctx.beginPath(); ctx.roundRect(50, 100, 300, 220, 15); ctx.fill();
-    ctx.fillStyle = "#001";
+    
+    // Pantalla
+    let sGrd = ctx.createLinearGradient(70, 120, 330, 300);
+    sGrd.addColorStop(0, "#001"); sGrd.addColorStop(1, "#004");
+    ctx.fillStyle = sGrd;
     ctx.fillRect(70, 120, 260, 160);
+
+    // Reflejo en la pantalla
+    ctx.fillStyle = "rgba(255,255,255,0.05)";
+    ctx.beginPath(); ctx.moveTo(70, 120); ctx.lineTo(330, 120); ctx.lineTo(70, 280); ctx.fill();
+
+    // Soporte/Peana
+    ctx.fillStyle = "#222";
+    ctx.fillRect(160, 320, 80, 40);
+    ctx.fillRect(120, 360, 160, 20);
 }
 
 function drawMouse() {
+    // Cable
+    ctx.strokeStyle = "#222"; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(200, 0); ctx.quadraticCurveTo(220, 100, 200, 150); ctx.stroke();
+
+    // Cuerpo del ratón
+    let mGrd = ctx.createRadialGradient(200, 300, 20, 200, 300, 150);
+    mGrd.addColorStop(0, "#444"); mGrd.addColorStop(1, "#111");
+    ctx.fillStyle = mGrd;
+    ctx.beginPath();
+    ctx.ellipse(200, 320, 70, 100, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = "#555"; ctx.stroke();
+
+    // Botones y Rueda
     ctx.fillStyle = "#222";
-    ctx.beginPath(); ctx.ellipse(200, 320, 70, 100, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(135, 280); ctx.lineTo(265, 280); ctx.stroke(); // Línea divisoria
+    ctx.fillStyle = "cyan";
+    ctx.beginPath(); ctx.roundRect(192, 230, 16, 35, 5); ctx.fill(); // Rueda LED
 }
 
-// --- LÓGICA DE MOVIMIENTO ---
+// --- LÓGICA DE JUEGO ---
+
 function moveSponge(e) {
-    if(!gameRunning) return;
     e.preventDefault();
     let clientX, clientY;
     if (e.touches && e.touches.length > 0) {
@@ -141,8 +174,44 @@ canvas.addEventListener("mousemove", moveSponge);
 canvas.addEventListener("touchmove", moveSponge, {passive: false});
 canvas.addEventListener("mousedown", () => isFiring = true);
 canvas.addEventListener("mouseup", () => isFiring = false);
-canvas.addEventListener("touchstart", (e) => { isFiring = true; moveSponge(e); }, {passive: false});
+canvas.addEventListener("touchstart", (e) => { isFiring = true; moveSponge(e); });
 canvas.addEventListener("touchend", () => isFiring = false);
+
+function drawVirus(v) {
+    ctx.save();
+    ctx.translate(v.x, v.y);
+    ctx.fillStyle = "#ff1111";
+    ctx.beginPath(); ctx.arc(0, 0, v.r, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = "#ff1111"; ctx.lineWidth = 3;
+    for(let i=0; i<8; i++) {
+        let ang = (i/8) * Math.PI*2 + (Date.now()/400);
+        ctx.beginPath(); ctx.moveTo(0,0);
+        ctx.lineTo(Math.cos(ang)*24, Math.sin(ang)*24); ctx.stroke();
+    }
+    ctx.fillStyle = "white";
+    ctx.fillRect(-6, -5, 4, 4); ctx.fillRect(2, -5, 4, 4);
+    ctx.restore();
+
+    if(Math.random() < 0.005 + (level * 0.01)) {
+        bubbles.push({ x: v.x, y: v.y, r: 8, vy: 3 + (level * 1.5) });
+    }
+}
+
+function drawBubbles() {
+    for (let i = bubbles.length - 1; i >= 0; i--) {
+        let b = bubbles[i];
+        b.y += b.vy;
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+        ctx.strokeStyle = "cyan"; ctx.stroke();
+        ctx.fillStyle = "rgba(0, 255, 255, 0.2)"; ctx.fill();
+
+        let dist = Math.hypot((sponge.x+25) - b.x, (sponge.y+17) - b.y);
+        if(dist < 30 && shockTimer <= 0) {
+            bubbles.splice(i, 1);
+            takeDamage();
+        } else if(b.y > 600) bubbles.splice(i, 1);
+    }
+}
 
 function takeDamage() {
     lives--;
@@ -160,17 +229,23 @@ function endGame(msg, color) {
     ctx.font = "20px 'Press Start 2P'";
     ctx.textAlign = "center";
     ctx.fillText(msg, 200, 300);
-    
-    // Descuentos finales
-    ctx.fillStyle = "white";
-    ctx.font = "12px 'Press Start 2P'";
     if(msg === "LIMPIEZA 100%") {
+        ctx.fillStyle = "white";
+        ctx.font = "10px 'Press Start 2P'";
         ctx.fillText("¡HARDWARE IMPECABLE!", 200, 340);
-        ctx.fillStyle = "yellow";
-        ctx.fillText("BONO: 40% DESCUENTO", 200, 380);
     }
-
     setTimeout(() => location.reload(), 4000);
+}
+
+function drawLaser() {
+    if (isFiring && shockTimer <= 0) {
+        ctx.shadowBlur = 20; ctx.shadowColor = "cyan";
+        ctx.strokeStyle = "white"; ctx.lineWidth = 6;
+        ctx.beginPath(); ctx.moveTo(sponge.x + 25, sponge.y);
+        ctx.lineTo(sponge.x + 25, 0); ctx.stroke();
+        ctx.shadowBlur = 0;
+        dust = dust.filter(d => !(Math.abs(d.x - (sponge.x + 25)) < 20 && d.y < sponge.y));
+    }
 }
 
 function createLevel() {
@@ -189,56 +264,42 @@ function createLevel() {
     }
 }
 
-// FUNCIÓN DE INICIO REFORZADA
 function startGame() {
-    console.log("Iniciando...");
-    menu.style.display = "none";
-    hud.style.display = "flex";
+    document.getElementById("menu").style.display = "none";
+    document.getElementById("hud").style.display = "flex";
     canvas.style.display = "block";
-    
-    level = 1; 
-    lives = 3;
     gameRunning = true;
-    
-    document.getElementById("lvl").innerText = level;
-    document.getElementById("vds").innerText = "❤️❤️❤️";
-    
+    level = 1; lives = 3;
     createLevel();
-    requestAnimationFrame(update);
+    update();
 }
-
-// Evento de clic y touch para el botón
-btnStart.addEventListener("click", startGame);
-btnStart.addEventListener("touchstart", (e) => {
-    e.preventDefault();
-    startGame();
-}, {once: true});
 
 function update() {
     if(!gameRunning) return;
     ctx.clearRect(0, 0, 400, 600);
 
+    // Dibujar fondo según nivel
     if(level === 1) drawTower();
     else if(level === 2) drawMonitor();
     else drawMouse();
 
+    // Dibujar Suciedad
     ctx.fillStyle = "#5c4033";
     dust.forEach(d => {
         ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI*2); ctx.fill();
     });
 
+    // Virus
     viruses.forEach(v => {
         v.x += v.vx; v.y += v.vy;
         if(v.x < 10 || v.x > 390) v.vx *= -1;
         if(v.y < 10 || v.y > 590) v.vy *= -1;
-        
-        ctx.fillStyle = "red";
-        ctx.beginPath(); ctx.arc(v.x, v.y, v.r, 0, Math.PI*2); ctx.fill();
-        
+        drawVirus(v);
         let dist = Math.hypot((sponge.x+25) - v.x, (sponge.y+17) - v.y);
         if(dist < 32 && shockTimer <= 0) takeDamage();
     });
 
+    drawBubbles();
     if(shockTimer > 0) {
         shockTimer--;
         if(shockTimer === 0) canvas.classList.remove("shock");
@@ -248,32 +309,18 @@ function update() {
     let progress = Math.floor(((totalDustInLevel - dust.length) / totalDustInLevel) * 100);
     document.getElementById("pct").innerText = progress + "%";
 
-    // Esponja
+    drawLaser();
+    // Dibujar Esponja
     ctx.fillStyle = (shockTimer > 0 && shockTimer % 2 === 0) ? "white" : "#ffd700";
     ctx.beginPath(); ctx.roundRect(sponge.x, sponge.y, 50, 35, 8); ctx.fill();
+    ctx.strokeStyle = "#daa520"; ctx.stroke();
 
     if(dust.length === 0) {
-        if(level === 3) {
-            endGame("LIMPIEZA 100%", "cyan");
-        } else {
-            gameRunning = false;
-            let currentLevel = level;
-            let discount = currentLevel === 1 ? "10%" : "20%";
-            
-            ctx.fillStyle = "rgba(0,0,0,0.7)";
-            ctx.fillRect(0, 250, 400, 100);
-            ctx.fillStyle = "yellow";
-            ctx.font = "12px 'Press Start 2P'";
-            ctx.textAlign = "center";
-            ctx.fillText(¡LVL ${currentLevel} OK! GANASTE ${discount}, 200, 310);
-            
-            setTimeout(() => {
-                level++;
-                document.getElementById("lvl").innerText = level;
-                createLevel();
-                gameRunning = true;
-                update();
-            }, 2000);
+        level++;
+        if(level > 3) endGame("LIMPIEZA 100%", "cyan");
+        else {
+            document.getElementById("lvl").innerText = level;
+            createLevel();
         }
     }
     if(gameRunning) requestAnimationFrame(update);
@@ -281,3 +328,4 @@ function update() {
 </script>
 </body>
 </html>
+
